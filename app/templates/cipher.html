@@ -2,431 +2,432 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>point.market — cipher</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Point.Cipher</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#07080f;--surface:#0d0f1a;--border:#1a1d2e;--accent:#3d7fff;--text:#c8d0e8;--muted:#4a5068;--success:#3dffaa;--warn:#ffcc44;--err:#ff4a4a}
+:root{
+  --paper:#FFFFFF; --plate:#F3F3F1; --ink:#141414; --ink-2:#5F5F5F; --ink-3:#6E6E6A; --rule:#DCDCDA;
+  --navy:#1F3A5F; --navy-2:#152A45; --navy-tint:#E8EDF3;
+  --ok:#1E6B3A; --ok-tint:#E9F3EC; --err:#A3241B; --err-tint:#F8EAE8;
+  --display:"Libre Caslon Display",Georgia,"Times New Roman",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --bar:64px;
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--paper);color:var(--ink);font:15px/1.5 var(--sans);min-height:100vh}
+::selection{background:var(--navy);color:#fff}
+:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+button,input,select{font:inherit;color:inherit}
+.num{font-variant-numeric:tabular-nums}
+.mono{font-family:var(--mono)}
 
-nav{display:flex;align-items:center;padding:14px 28px;border-bottom:1px solid var(--border);
-    position:sticky;top:0;background:var(--bg);z-index:100;gap:24px}
-.logo{font-size:20px;font-weight:800;letter-spacing:-0.5px}
-.logo span{color:var(--accent)}
-.logo-tag{font-family:'Space Mono',monospace;font-size:9px;color:var(--err);letter-spacing:2px;
-          border:1px solid rgba(255,74,74,.3);padding:2px 7px;border-radius:3px}
-.nav-tabs{display:flex;gap:0}
-.nav-tab{padding:8px 18px;cursor:pointer;font-family:'Space Mono',monospace;font-size:10px;
-         letter-spacing:2px;color:var(--muted);border-bottom:2px solid transparent;transition:.15s}
-.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
-.nav-right{margin-left:auto;font-family:'Space Mono',monospace;font-size:10px;color:var(--muted)}
-.live-dot{color:var(--err)}
+.topbar{position:sticky;top:0;z-index:20;height:var(--bar);background:var(--paper);border-bottom:1px solid var(--ink);
+  display:flex;align-items:center;gap:32px;padding:0 32px}
+.wordmark{font-family:var(--display);font-size:26px;line-height:1;white-space:nowrap}
+.tabs{display:flex;gap:4px;height:100%}
+.tab{background:none;border:0;padding:0 14px;height:100%;cursor:pointer;color:var(--ink-2);font-size:15px;box-shadow:inset 0 -2px 0 transparent;transition:color .15s,box-shadow .15s}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);font-weight:600;box-shadow:inset 0 -2px 0 var(--ink)}
+.private{margin-left:auto;font-size:14px;color:var(--err);border:1px solid currentColor;padding:4px 10px;white-space:nowrap}
 
-/* LAYOUT */
-.page{display:none;padding:28px 32px;max-width:1100px;margin:0 auto}
-.page.active{display:block}
+.page{max-width:1040px;margin:0 auto;padding:40px 32px 120px}
+.intro{margin-bottom:36px;max-width:64ch}
+.intro h1{font-family:var(--display);font-weight:400;font-size:40px;line-height:1.1;letter-spacing:-.01em;margin-bottom:10px}
+.intro p{color:var(--ink-2);font-size:16px}
 
-/* GRID: object selectors (2×2) */
-.obj-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
-.obj-slot{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden}
-.obj-slot-header{padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
-.slot-num{font-family:'Space Mono',monospace;font-size:9px;color:var(--accent);letter-spacing:1px}
-.slot-selects{display:flex;gap:6px;padding:10px 12px}
-.obj-canvas{height:140px;background:#050508}
+.step{border-top:1px solid var(--ink);padding:24px 0 36px;display:grid;grid-template-columns:64px minmax(0,1fr);gap:0 24px}
+.step-no{font-family:var(--display);font-size:40px;line-height:1}
+.step h2{font-size:20px;line-height:1.3;margin-bottom:4px}
+.step .sub{color:var(--ink-2);margin-bottom:20px;max-width:64ch}
 
-/* FORM AREA */
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
-.form-block{display:flex;flex-direction:column;gap:6px}
-.label{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted)}
-.input{padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:5px;
-       color:var(--text);font-family:'Space Mono',monospace;font-size:11px;width:100%}
-.input:focus{outline:none;border-color:var(--accent)}
-.input::placeholder{color:var(--muted)}
-select.input option{background:var(--surface)}
+.slots{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.slot-title{font-weight:600;margin-bottom:8px}
+.selects{display:grid;grid-template-columns:2fr 3fr;gap:8px;margin-bottom:8px}
+.plate{position:relative;height:220px;background:var(--plate);overflow:hidden;touch-action:none}
+.plate canvas{position:absolute;inset:0;width:100%;height:100%;cursor:grab}
+.plate canvas:active{cursor:grabbing}
+.plate .ph{position:absolute;inset:0;display:grid;place-items:center;color:var(--ink-3);font-size:14px;text-align:center;padding:16px}
+.plate.loading{animation:pulse 1.4s ease-in-out infinite alternate}
+@keyframes pulse{from{background-color:var(--plate)}to{background-color:#E7E7E4}}}
+.cap{display:flex;justify-content:space-between;font-size:14px;color:var(--ink-2);margin-top:8px}
+.cap b{color:var(--ink);font-weight:600}
 
-/* BUTTONS */
-.btn{padding:10px 18px;border:none;border-radius:5px;cursor:pointer;
-     font-family:'Space Mono',monospace;font-size:11px;letter-spacing:1px;transition:.15s}
-.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{opacity:.85}
-.btn-secondary{background:var(--surface);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{border-color:var(--accent)}
-.btn-danger{background:rgba(255,74,74,.15);color:var(--err);border:1px solid rgba(255,74,74,.3)}.btn-danger:hover{background:rgba(255,74,74,.25)}
-.btn-wide{width:100%;padding:12px}
-.btn-row{display:flex;gap:10px;margin-bottom:20px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:16px 20px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:14px;font-weight:600;display:flex;justify-content:space-between}
+.field label span{font-weight:400;color:var(--ink-3)}
+.input{height:44px;padding:0 12px;border:1px solid var(--ink-3);background:var(--paper);font-size:15px;width:100%;border-radius:0}
+.input:hover{border-color:var(--ink)}
+.input:focus{outline:2px solid var(--navy);outline-offset:-1px;border-color:var(--navy)}
+.input::placeholder{color:var(--ink-3)}
+select.input{appearance:none;background:var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23141414' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 12px center;padding-right:34px}
 
-/* STEGO RESULT */
-.stego-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
-.stego-thumb{background:#050508;border-radius:6px;overflow:hidden;border:1px solid rgba(239,154,154,.2)}
-.stego-thumb-canvas{height:110px}
-.stego-thumb-label{padding:4px 8px;font-family:'Space Mono',monospace;font-size:8px;color:rgba(239,154,154,.7)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:42px;padding:0 18px;border:1px solid var(--ink);background:var(--paper);font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background-color .15s,border-color .15s}
+.btn:hover{background:var(--plate)}
+.btn-primary{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn-primary:hover{background:var(--navy-2);border-color:var(--navy-2)}
+.btn:disabled{opacity:.5;cursor:progress}
+.btn-block{width:100%;height:52px;font-size:16px}
 
-/* TRADE ID BOX */
-.trade-box{background:rgba(61,127,255,.06);border:1px solid rgba(61,127,255,.25);border-radius:8px;
-           padding:16px 20px;margin:16px 0}
-.trade-box-title{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted);margin-bottom:8px}
-.trade-id{font-family:'Space Mono',monospace;font-size:16px;font-weight:700;color:var(--accent);letter-spacing:3px}
-.trade-cd{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);margin-top:6px}
+.status{margin-top:12px;font-size:14px;padding:10px 14px;border:1px solid;max-width:72ch}
+.status[hidden]{display:none}
+.status.info{border-color:var(--rule);color:var(--ink-2);background:var(--plate)}
+.status.ok{border-color:#B9D6C2;color:var(--ok);background:var(--ok-tint)}
+.status.err{border-color:#E6BDB8;color:var(--err);background:var(--err-tint)}
 
-/* DECODE RESULT */
-.decode-box{border-radius:8px;padding:16px 20px;margin:16px 0;display:none}
-.decode-box.ok{background:rgba(61,255,170,.06);border:1px solid rgba(61,255,170,.25)}
-.decode-box.fail{background:rgba(255,74,74,.06);border:1px solid rgba(255,74,74,.25)}
-.decode-title{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;margin-bottom:10px}
-.decode-title.ok{color:var(--success)}.decode-title.fail{color:var(--err)}
-.decode-msg{font-size:22px;font-weight:800;letter-spacing:1px;margin-bottom:8px}
-.decode-meta{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);line-height:1.9}
+.result{border-top:1px solid var(--ink);padding-top:24px;margin-top:8px}
+.result h2{font-size:20px;margin-bottom:16px}
+.quad{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.quad .plate{height:180px}
+.ticket{margin-top:24px;border:1px solid var(--ink);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;padding:20px 24px}
+.ticket .k{font-size:14px;color:var(--ink-2)}
+.ticket .tid{font-family:var(--mono);font-size:24px;font-weight:700;letter-spacing:.03em;margin-top:4px;overflow-wrap:anywhere}
+.ticket .cd{font-size:14px;color:var(--ink-2);margin-top:6px}
 
-/* STATUS BAR */
-.status{font-family:'Space Mono',monospace;font-size:10px;padding:8px 12px;border-radius:5px;margin:10px 0;display:none}
-.status.info{background:rgba(61,127,255,.1);border:1px solid rgba(61,127,255,.2);color:var(--accent)}
-.status.ok{background:rgba(61,255,170,.08);border:1px solid rgba(61,255,170,.2);color:var(--success)}
-.status.err{background:rgba(255,74,74,.08);border:1px solid rgba(255,74,74,.2);color:var(--err)}
+.decoded{margin-top:20px;border:1px solid var(--ink);padding:24px}
+.decoded[hidden]{display:none}
+.decoded .k{font-size:14px;font-weight:600;margin-bottom:12px}
+.decoded.ok .k{color:var(--ok)} .decoded.fail .k{color:var(--err)}
+.decoded .msg[hidden]{display:none}
+.decoded .msg{font-size:36px;font-weight:700;line-height:1.2;margin:8px 0 16px;overflow-wrap:anywhere}
+.chunks{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--ink-2)}
+.chunk{width:14px;height:14px;border:1px solid var(--ink)}
+.chunk.on{background:var(--ink)}
+.decoded .note{font-size:14px;color:var(--ink-2);margin-top:8px}
 
-/* SECTION TITLE */
-.section-title{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);
-               margin:20px 0 10px;text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:6px}
-.section-title:first-child{margin-top:0}
-
-/* RECEIVER STEGO PREVIEW */
-.recv-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
-.recv-thumb{background:#050508;border-radius:6px;overflow:hidden;border:1px solid rgba(61,127,255,.15)}
-.recv-canvas{height:110px}
-.recv-label{padding:4px 8px;font-family:'Space Mono',monospace;font-size:8px;color:rgba(79,195,247,.7)}
-
-/* CHUNK STATUS DOTS */
-.chunk-row{display:flex;gap:8px;align-items:center;margin:6px 0}
-.chunk-dot{width:10px;height:10px;border-radius:50%}
-.chunk-dot.ok{background:var(--success)}
-.chunk-dot.fail{background:var(--err)}
-.chunk-dot.pending{background:var(--muted)}
+@media (max-width:820px){
+  .topbar{height:auto;flex-wrap:wrap;gap:8px 16px;padding:12px 16px}
+  .tabs{order:3;width:100%;height:40px}
+  .page{padding:28px 16px 64px}
+  .intro h1{font-size:30px}
+  .step{grid-template-columns:1fr;gap:8px}
+  .step-no{font-size:30px}
+  .slots,.row{grid-template-columns:1fr}
+  .quad{grid-template-columns:1fr 1fr}
+  .ticket{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
 
-<nav>
-  <div class="logo">POINT<span>.</span>CIPHER</div>
-  <div class="logo-tag">⚠ PRIVATE — DO NOT SHARE</div>
-  <div class="nav-tabs">
-    <div class="nav-tab active" onclick="switchTab('sender',this)">SENDER</div>
-    <div class="nav-tab" onclick="switchTab('receiver',this)">RECEIVER</div>
+<header class="topbar">
+  <div class="wordmark">Point.Cipher</div>
+  <nav class="tabs" role="tablist" aria-label="Mode">
+    <button class="tab" role="tab" aria-selected="true" onclick="switchTab('sender',this)">Send a message</button>
+    <button class="tab" role="tab" aria-selected="false" onclick="switchTab('receiver',this)">Receive a message</button>
+  </nav>
+  <span class="private">Private tool. Do not share this URL.</span>
+</header>
+
+<!-- ═══ SENDER ═══ -->
+<main class="page" id="tab-sender">
+  <div class="intro">
+    <h1>Hide a message in four objects</h1>
+    <p>Your message is encrypted, protected with error correction and embedded into the geometry of four 3D objects. They are listed on Point.Market as an ordinary bundle.</p>
   </div>
-  <div class="nav-right"><span class="live-dot">●</span> OFFLINE MODE</div>
-</nav>
 
-<!-- ═══════════════════════════════════════════════════════ SENDER ════ -->
-<div class="page active" id="tab-sender">
-
-  <div class="section-title">1 — SELECT CARRIER OBJECTS</div>
-  <div class="obj-grid" id="sender-slots"></div>
-
-  <div class="btn-row">
-    <button class="btn btn-secondary" onclick="previewObjects()">👁 PREVIEW OBJECTS</button>
-    <button class="btn btn-secondary" onclick="randomizeAll()">🎲 RANDOMIZE ALL</button>
-  </div>
-  <div class="status" id="preview-status"></div>
-
-  <div class="section-title">2 — MESSAGE &amp; PASSPHRASE</div>
-  <div class="form-row">
-    <div class="form-block">
-      <div class="label">SECRET MESSAGE (max 16 chars)</div>
-      <input class="input" id="s-message" placeholder="Your secret text..." maxlength="16">
+  <section class="step">
+    <div class="step-no">1</div>
+    <div>
+      <h2>Choose four carrier objects</h2>
+      <p class="sub">Each object carries one quarter of the message. Pick them yourself or randomize, then preview.</p>
+      <div class="slots" id="sender-slots"></div>
+      <div class="actions">
+        <button class="btn" onclick="previewObjects()" id="preview-btn">Preview objects</button>
+        <button class="btn" onclick="randomizeAll()">Randomize all</button>
+      </div>
+      <div class="status" id="preview-status" role="status" hidden></div>
     </div>
-    <div class="form-block">
-      <div class="label">PASSPHRASE (shared with receiver)</div>
-      <input class="input" id="s-passphrase" placeholder="Pre-shared passphrase..." type="password">
+  </section>
+
+  <section class="step">
+    <div class="step-no">2</div>
+    <div>
+      <h2>Write the message</h2>
+      <p class="sub">Share the passphrase with the receiver through another channel. Without it, the message cannot be decrypted.</p>
+      <div class="row">
+        <div class="field">
+          <label for="s-message">Secret message <span id="msg-count" class="num">0 / 16</span></label>
+          <input class="input" id="s-message" maxlength="16" autocomplete="off" placeholder="Up to 16 characters">
+        </div>
+        <div class="field">
+          <label for="s-passphrase">Passphrase</label>
+          <input class="input" id="s-passphrase" type="password" autocomplete="new-password" placeholder="Agreed with the receiver">
+        </div>
+      </div>
     </div>
+  </section>
+
+  <section class="step">
+    <div class="step-no">3</div>
+    <div>
+      <h2>Describe the listing</h2>
+      <p class="sub">This is how the bundle appears to everyone else on the market.</p>
+      <div class="row">
+        <div class="field"><label for="s-listing-name">Listing title</label><input class="input" id="s-listing-name" placeholder="Prop Bundle"></div>
+        <div class="field"><label for="s-seller">Seller username</label><input class="input" id="s-seller" autocomplete="off" placeholder="cipher_user"></div>
+        <div class="field"><label for="s-price">Price ($)</label><input class="input num" id="s-price" type="number" step="0.01" min="0" placeholder="19.99"></div>
+      </div>
+      <div class="actions" style="margin-top:28px;display:block">
+        <button class="btn btn-primary btn-block" id="embed-btn" onclick="embedAndList()">Encrypt, embed and list</button>
+      </div>
+      <div class="status" id="embed-status" role="status" hidden></div>
+    </div>
+  </section>
+
+  <section class="result" id="stego-result" hidden>
+    <h2>Embedded objects</h2>
+    <div class="quad" id="stego-grid"></div>
+    <div class="ticket">
+      <div>
+        <div class="k">Trade ID. Send this to the receiver.</div>
+        <div class="tid" id="result-trade-id">—</div>
+        <div class="cd num" id="result-cd">Mean Chamfer distance —</div>
+      </div>
+      <button class="btn" id="copy-btn" onclick="copyTradeId()">Copy trade ID</button>
+    </div>
+  </section>
+</main>
+
+<!-- ═══ RECEIVER ═══ -->
+<main class="page" id="tab-receiver" hidden>
+  <div class="intro">
+    <h1>Recover a hidden message</h1>
+    <p>Enter the trade ID you received and the passphrase you agreed on. The four objects are read back, error-corrected and decrypted.</p>
   </div>
 
-  <div class="section-title">3 — MARKETPLACE LISTING</div>
-  <div class="form-row">
-    <div class="form-block">
-      <div class="label">LISTING TITLE</div>
-      <input class="input" id="s-listing-name" placeholder="e.g. Prop Bundle Vol.4">
+  <section class="step">
+    <div class="step-no">1</div>
+    <div>
+      <h2>Find the bundle</h2>
+      <p class="sub">The trade ID looks like TRD-20260611-3A3YLE8L.</p>
+      <div class="row">
+        <div class="field"><label for="r-trade-id">Trade ID</label><input class="input mono" id="r-trade-id" autocomplete="off" spellcheck="false" placeholder="TRD-YYYYMMDD-XXXXXXXX"></div>
+        <div class="field"><label for="r-passphrase">Passphrase</label><input class="input" id="r-passphrase" type="password" autocomplete="off"></div>
+      </div>
+      <div class="actions"><button class="btn" id="load-btn" onclick="loadStegoObjects()">Load objects</button></div>
+      <div class="status" id="load-status" role="status" hidden></div>
+      <div id="recv-preview" hidden style="margin-top:20px"><div class="quad" id="recv-grid"></div></div>
     </div>
-    <div class="form-block">
-      <div class="label">SELLER USERNAME</div>
-      <input class="input" id="s-seller" placeholder="Your username">
+  </section>
+
+  <section class="step">
+    <div class="step-no">2</div>
+    <div>
+      <h2>Decode</h2>
+      <p class="sub">Bits are extracted by the network, corrected with BCH and Chase decoding, then decrypted with your passphrase.</p>
+      <button class="btn btn-primary btn-block" id="decode-btn" onclick="decodeMessage()">Decode message</button>
+      <div class="status" id="decode-status" role="status" hidden></div>
+      <div class="decoded" id="decode-result" hidden aria-live="polite">
+        <div class="k" id="decode-title">—</div>
+        <div class="msg" id="decode-msg">—</div>
+        <div class="chunks" id="decode-chunks"></div>
+        <div class="note" id="decode-meta"></div>
+      </div>
     </div>
-  </div>
-  <div class="form-row">
-    <div class="form-block">
-      <div class="label">PRICE ($)</div>
-      <input class="input" id="s-price" placeholder="19.99" type="number" step="0.01">
-    </div>
-    <div class="form-block">
-      <!-- spacer -->
-    </div>
-  </div>
-
-  <button class="btn btn-primary btn-wide" onclick="embedAndList()">🔐 ENCRYPT · EMBED · LIST</button>
-  <div class="status" id="embed-status"></div>
-
-  <!-- Stego result -->
-  <div id="stego-result" style="display:none">
-    <div class="section-title">EMBEDDING RESULT</div>
-    <div class="stego-grid" id="stego-grid"></div>
-    <div class="trade-box">
-      <div class="trade-box-title">TRADE ID — SHARE THIS WITH RECEIVER</div>
-      <div class="trade-id" id="result-trade-id">—</div>
-      <div class="trade-cd" id="result-cd">Chamfer Distance: —</div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════ RECEIVER ═══ -->
-<div class="page" id="tab-receiver">
-
-  <div class="section-title">1 — ENTER TRADE ID &amp; PASSPHRASE</div>
-  <div class="form-row">
-    <div class="form-block">
-      <div class="label">TRADE ID (from marketplace)</div>
-      <input class="input" id="r-trade-id" placeholder="TRD-20260601-XXXXXXXX">
-    </div>
-    <div class="form-block">
-      <div class="label">PASSPHRASE</div>
-      <input class="input" id="r-passphrase" placeholder="Pre-shared passphrase..." type="password">
-    </div>
-  </div>
-
-  <div class="btn-row">
-    <button class="btn btn-secondary" onclick="loadStegoObjects()">📦 LOAD STEGO OBJECTS</button>
-  </div>
-  <div class="status" id="load-status"></div>
-
-  <!-- Stego object preview -->
-  <div id="recv-preview" style="display:none">
-    <div class="section-title">STEGO OBJECTS (from marketplace)</div>
-    <div class="recv-grid" id="recv-grid"></div>
-  </div>
-
-  <div class="section-title">2 — DECODE</div>
-  <button class="btn btn-danger btn-wide" onclick="decodeMessage()">🔓 DECODE MESSAGE</button>
-  <div class="status" id="decode-status"></div>
-
-  <div class="decode-box" id="decode-result">
-    <div class="decode-title" id="decode-title">—</div>
-    <div class="decode-msg" id="decode-msg">—</div>
-    <div class="decode-meta" id="decode-meta">—</div>
-  </div>
-</div>
+  </section>
+</main>
 
 <script>
-function makePCRenderer(container, points, color=0x4FC3F7) {
-  const W=container.clientWidth||240, H=container.clientHeight||140;
-  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
-  renderer.setSize(W,H); renderer.setClearColor(0x050508);
-  container.innerHTML=''; container.appendChild(renderer.domElement);
-  const scene=new THREE.Scene();
-  const camera=new THREE.PerspectiveCamera(45,W/H,0.01,100);
-  camera.position.set(0,0,2.8);
-  const flat=new Float32Array(points.flat());
-  const geo=new THREE.BufferGeometry();
-  geo.setAttribute('position',new THREE.BufferAttribute(flat,3));
-  let sumY=0; for(let i=1;i<flat.length;i+=3) sumY+=flat[i];
-  const avgY=sumY/(flat.length/3);
-  const mesh=new THREE.Points(geo,new THREE.PointsMaterial({size:0.013,color,sizeAttenuation:true}));
-  let rx=avgY<-0.1?Math.PI:0.2, ry=0;
-  if(avgY<-0.1) mesh.rotation.x=Math.PI;
-  scene.add(mesh);
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const INK=[20,20,20], NAVY=[31,58,95];
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+function makePCRenderer(container, points, rgb=INK, autoRotate=true){
+  container.classList.remove('loading');
+  container.querySelectorAll('canvas,.ph').forEach(c=>c.remove());
+  const canvas=document.createElement('canvas'); canvas.setAttribute('aria-hidden','true');
+  container.prepend(canvas);
+  const ctx=canvas.getContext('2d');
+  const n=points.length, P=new Float32Array(n*3);
+  // ModelNet40 is Z-up: map (x, y, z) -> screen (x, z, -y)
+  for(let i=0;i<n;i++){const p=points[i];P[i*3]=p[0];P[i*3+1]=p[2];P[i*3+2]=-p[1];}
+  // fit by the 98th-percentile radius so one stray point cannot shrink the object
+  const R=new Float32Array(n); for(let i=0;i<n;i++) R[i]=Math.hypot(P[i*3],P[i*3+1],P[i*3+2]);
+  R.sort(); const fitK=Math.min(3,1/Math.max(R[Math.floor((n-1)*0.98)]||1,0.2));
+  let rx=0.35, ry=0.6;
+  const alphas=[.22,.42,.66,.92];
+  function draw(){
+    const w=canvas.width,h=canvas.height; if(!w||!h) return;
+    ctx.clearRect(0,0,w,h);
+    const cx=Math.cos(rx),sx=Math.sin(rx),cy=Math.cos(ry),sy=Math.sin(ry);
+    const s=Math.min(w,h)*0.4*fitK, ox=w/2, oy=h/2, r=Math.max(1.2,Math.min(w,h)/240)*1.1;
+    const B=[[],[],[],[]];
+    for(let i=0;i<n;i++){
+      const x=P[i*3],y=P[i*3+1],z=P[i*3+2];
+      const x1=x*cy+z*sy, z1=-x*sy+z*cy, y2=y*cx-z1*sx, z2=y*sx+z1*cx, f=2.8/(2.8-z2);
+      B[Math.max(0,Math.min(3,((z2+1)*2)|0))].push(ox+x1*f*s, oy-y2*f*s);
+    }
+    for(let b=0;b<4;b++){ctx.fillStyle=`rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alphas[b]})`;const a=B[b];for(let k=0;k<a.length;k+=2)ctx.fillRect(a[k]-r/2,a[k+1]-r/2,r,r);}
+  }
+  function fit(){const d=Math.min(devicePixelRatio||1,2),rc=container.getBoundingClientRect();canvas.width=Math.round(rc.width*d);canvas.height=Math.round(rc.height*d);draw();}
   let drag=false,px=0,py=0;
-  const el=renderer.domElement;
-  el.addEventListener('mousedown',e=>{drag=true;px=e.clientX;py=e.clientY});
-  el.addEventListener('mousemove',e=>{if(!drag)return;ry+=(e.clientX-px)*0.01;rx+=(e.clientY-py)*0.01;px=e.clientX;py=e.clientY});
-  el.addEventListener('mouseup',()=>drag=false);
-  el.addEventListener('mouseleave',()=>drag=false);
-  (function anim(){requestAnimationFrame(anim);if(!drag)ry+=0.005;mesh.rotation.x=rx;mesh.rotation.y=ry;renderer.render(scene,camera)})();
+  canvas.addEventListener('pointerdown',e=>{drag=true;px=e.clientX;py=e.clientY;canvas.setPointerCapture(e.pointerId)});
+  canvas.addEventListener('pointermove',e=>{if(!drag)return;ry+=(e.clientX-px)*0.01;rx+=(e.clientY-py)*0.01;px=e.clientX;py=e.clientY;draw()});
+  canvas.addEventListener('pointerup',()=>drag=false);
+  canvas.addEventListener('pointercancel',()=>drag=false);
+  new ResizeObserver(fit).observe(container); fit();
+  if(autoRotate&&!REDUCED){(function anim(){if(!canvas.isConnected)return;if(!drag){ry+=0.004;draw();}requestAnimationFrame(anim)})();}
 }
 
-function status(id, msg, type='info') {
-  const el=document.getElementById(id);
-  el.textContent=msg; el.className=`status ${type}`; el.style.display='block';
-}
-function clearStatus(id) { document.getElementById(id).style.display='none'; }
+function status(id,msg,type='info'){const el=document.getElementById(id);el.textContent=msg;el.className=`status ${type}`;el.hidden=false;}
+function clearStatus(id){document.getElementById(id).hidden=true;}
+function busy(id,on,label){const b=document.getElementById(id);if(!b)return;if(on){b.dataset.label=b.textContent;b.textContent=label;b.disabled=true;}else{b.textContent=b.dataset.label||b.textContent;b.disabled=false;}}
+function title(c){return c.charAt(0).toUpperCase()+c.slice(1).replace(/_/g,' ')}
 
 const CATEGORIES = {{ categories | tojson }};
 
-function buildSenderSlots() {
-  const grid=document.getElementById('sender-slots');
-  grid.innerHTML='';
-  for(let i=0;i<4;i++) {
-    const catOpts=CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join('');
-    const div=document.createElement('div'); div.className='obj-slot';
+function buildSenderSlots(){
+  const grid=document.getElementById('sender-slots'); grid.innerHTML='';
+  for(let i=0;i<4;i++){
+    const catOpts=CATEGORIES.map(c=>`<option value="${esc(c)}">${esc(title(c))}</option>`).join('');
+    const div=document.createElement('div');
     div.innerHTML=`
-      <div class="obj-slot-header">
-        <span class="slot-num">OBJECT ${i+1}</span>
+      <div class="slot-title">Object ${i+1}</div>
+      <div class="selects">
+        <select class="input" id="s-cat-${i}" aria-label="Object ${i+1} category" onchange="loadObjModels(${i})">${catOpts}</select>
+        <select class="input" id="s-model-${i}" aria-label="Object ${i+1} model"><option>Loading…</option></select>
       </div>
-      <div class="slot-selects">
-        <select class="input" id="s-cat-${i}" onchange="loadObjModels(${i})" style="flex:1">${catOpts}</select>
-        <select class="input" id="s-model-${i}" style="flex:2"><option>Loading...</option></select>
-      </div>
-      <div class="obj-canvas" id="s-canvas-${i}"></div>`;
+      <div class="plate" id="s-canvas-${i}"><div class="ph">Preview to see this object</div></div>`;
     grid.appendChild(div);
-    const defaultCat = CATEGORIES[i % CATEGORIES.length];
-    document.getElementById(`s-cat-${i}`).value = defaultCat;
+    document.getElementById(`s-cat-${i}`).value=CATEGORIES[i%CATEGORIES.length];
     loadObjModels(i);
   }
 }
 
-async function loadObjModels(i) {
+async function loadObjModels(i){
   const cat=document.getElementById(`s-cat-${i}`).value;
-  const res=await fetch(`/api/objects_in_category?cat=${encodeURIComponent(cat)}`);
-  const objs=await res.json();
-  const sel=document.getElementById(`s-model-${i}`);
-  sel.innerHTML=objs.map(o=>`<option value="${o}">${o}</option>`).join('');
+  const objs=await fetch(`/api/objects_in_category?cat=${encodeURIComponent(cat)}`).then(r=>r.json());
+  document.getElementById(`s-model-${i}`).innerHTML=objs.map(o=>`<option value="${esc(o)}">${o==='🎲 Random'?'Random object':esc(o)}</option>`).join('');
 }
 
-function randomizeAll() {
-  for(let i=0;i<4;i++) {
+function randomizeAll(){
+  for(let i=0;i<4;i++){
     const catSel=document.getElementById(`s-cat-${i}`);
     catSel.value=CATEGORIES[Math.floor(Math.random()*CATEGORIES.length)];
-    loadObjModels(i).then(()=>{
-      const modelSel=document.getElementById(`s-model-${i}`);
-      if(modelSel.options.length>1)
-        modelSel.selectedIndex=Math.floor(Math.random()*modelSel.options.length);
-    });
+    loadObjModels(i).then(()=>{const m=document.getElementById(`s-model-${i}`);if(m.options.length>1)m.selectedIndex=Math.floor(Math.random()*m.options.length);});
   }
 }
 
-async function previewObjects() {
-  status('preview-status','Loading previews...','info');
+async function previewObjects(){
+  status('preview-status','Sampling the four objects…','info');
+  busy('preview-btn',true,'Loading…');
   const cats=[],models=[];
-  for(let i=0;i<4;i++) {
-    cats.push(document.getElementById(`s-cat-${i}`).value);
-    models.push(document.getElementById(`s-model-${i}`).value);
-  }
-  try {
-    const res=await fetch('/api/preview',{method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({categories:cats,objects:models})});
-    const data=await res.json();
+  for(let i=0;i<4;i++){cats.push(document.getElementById(`s-cat-${i}`).value);models.push(document.getElementById(`s-model-${i}`).value);document.getElementById(`s-canvas-${i}`).classList.add('loading');}
+  try{
+    const data=await fetch('/api/preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({categories:cats,objects:models})}).then(r=>r.json());
     data.forEach((item,i)=>{
-      const c=document.getElementById(`s-canvas-${i}`);
-      if(c) makePCRenderer(c, item.points, 0x4FC3F7);
+      const c=document.getElementById(`s-canvas-${i}`); if(c) makePCRenderer(c,item.points,INK);
       const sel=document.getElementById(`s-model-${i}`);
-      for(let o of sel.options) { if(o.value===item.name){o.selected=true;break;} }
+      for(const o of sel.options){if(o.value===item.name){o.selected=true;break;}}
     });
-    status('preview-status','Preview ready — objects loaded ✓','ok');
-  } catch(e) {
-    status('preview-status','Preview failed: '+e.message,'err');
-  }
+    status('preview-status','Objects ready. Drag any preview to rotate it.','ok');
+  }catch(e){status('preview-status','Preview failed: '+e.message,'err');}
+  busy('preview-btn',false);
 }
 
-async function embedAndList() {
+async function embedAndList(){
   const message=document.getElementById('s-message').value.trim();
   const passphrase=document.getElementById('s-passphrase').value;
   const listingName=document.getElementById('s-listing-name').value||'Prop Bundle';
   const seller=document.getElementById('s-seller').value||'cipher_user';
   const price=parseFloat(document.getElementById('s-price').value)||19.99;
-
-  if(!message) { status('embed-status','Enter a message first','err'); return; }
-  if(!passphrase) { status('embed-status','Enter a passphrase first','err'); return; }
-
-  status('embed-status','Encrypting → embedding → listing... (this takes a few seconds)','info');
-  document.getElementById('stego-result').style.display='none';
-
-  try {
-    const res=await fetch('/api/embed',{method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({message,passphrase,listing_name:listingName,seller,price})});
-    const data=await res.json();
-    if(data.error) { status('embed-status',data.error,'err'); return; }
-
-    const grid=document.getElementById('stego-grid');
-    grid.innerHTML='';
+  if(!message){status('embed-status','Write a message in step 2 first.','err');return;}
+  if(!passphrase){status('embed-status','Set a passphrase in step 2 first.','err');return;}
+  status('embed-status','Encrypting, embedding and listing. This takes about 10 seconds on a CPU.','info');
+  busy('embed-btn',true,'Embedding…');
+  document.getElementById('stego-result').hidden=true;
+  try{
+    const data=await fetch('/api/embed',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message,passphrase,listing_name:listingName,seller,price})}).then(r=>r.json());
+    if(data.error){
+      status('embed-status',data.error==='Preview objects first'?'Preview the objects in step 1 before embedding.':data.error,'err');
+      busy('embed-btn',false);return;
+    }
+    const grid=document.getElementById('stego-grid'); grid.innerHTML='';
+    document.getElementById('stego-result').hidden=false;
     data.stego_points.forEach((pts,i)=>{
-      const div=document.createElement('div'); div.className='stego-thumb';
-      div.innerHTML=`<div class="stego-thumb-canvas" id="stg-${i}"></div>
-                     <div class="stego-thumb-label">Stego Object ${i+1} · CD: ${data.cds[i].toFixed(6)}</div>`;
+      const div=document.createElement('div');
+      div.innerHTML=`<div class="plate" id="stg-${i}"></div><div class="cap"><span>Object ${i+1}</span><b class="num">CD ${data.cds[i].toFixed(6)}</b></div>`;
       grid.appendChild(div);
-      setTimeout(()=>{ const c=document.getElementById(`stg-${i}`); if(c) makePCRenderer(c,pts,0xef9a9a); },50);
+      makePCRenderer(document.getElementById(`stg-${i}`),pts,NAVY);
     });
-
     document.getElementById('result-trade-id').textContent=data.trade_id;
     const avgCD=(data.cds.reduce((a,b)=>a+b,0)/data.cds.length).toFixed(6);
-    document.getElementById('result-cd').textContent=`Mean Chamfer Distance: ${avgCD}`;
-    document.getElementById('stego-result').style.display='block';
-    status('embed-status','Embedded and listed on marketplace ✓  Share the Trade ID with your receiver.','ok');
-
-  } catch(e) {
-    status('embed-status','Embed failed: '+e.message,'err');
-  }
+    document.getElementById('result-cd').textContent=`Mean Chamfer distance ${avgCD}`;
+    status('embed-status','Embedded and listed on Point.Market as an ordinary bundle.','ok');
+    document.getElementById('stego-result').scrollIntoView({behavior:REDUCED?'auto':'smooth',block:'start'});
+  }catch(e){status('embed-status','Embedding failed: '+e.message,'err');}
+  busy('embed-btn',false);
 }
 
-async function loadStegoObjects() {
+function copyTradeId(){
+  const t=document.getElementById('result-trade-id').textContent, b=document.getElementById('copy-btn');
+  navigator.clipboard?.writeText(t).then(()=>{b.textContent='Copied';setTimeout(()=>b.textContent='Copy trade ID',1600);});
+}
+
+async function loadStegoObjects(){
   const tradeId=document.getElementById('r-trade-id').value.trim();
-  if(!tradeId) { status('load-status','Enter a Trade ID first','err'); return; }
-
-  status('load-status','Loading stego objects...','info');
-  document.getElementById('recv-preview').style.display='none';
-
-  try {
-    const grid=document.getElementById('recv-grid');
-    grid.innerHTML='';
-    const loaded=[];
-    for(let i=0;i<4;i++) {
+  if(!tradeId){status('load-status','Enter a trade ID first.','err');return;}
+  status('load-status','Loading the bundle…','info');
+  busy('load-btn',true,'Loading…');
+  document.getElementById('recv-preview').hidden=true;
+  try{
+    const grid=document.getElementById('recv-grid'); grid.innerHTML='';
+    for(let i=0;i<4;i++){
       const res=await fetch(`/api/stego_points/${encodeURIComponent(tradeId)}/${i}`);
-      if(!res.ok) { status('load-status',`Object ${i+1} not found. Check Trade ID.`,'err'); return; }
+      if(!res.ok){status('load-status',`No bundle found for ${tradeId}. Check the trade ID and try again.`,'err');busy('load-btn',false);return;}
       const data=await res.json();
-      loaded.push(data.points);
-      const div=document.createElement('div'); div.className='recv-thumb';
-      div.innerHTML=`<div class="recv-canvas" id="rv-${i}"></div>
-                     <div class="recv-label">Object ${i+1}</div>`;
+      const div=document.createElement('div');
+      div.innerHTML=`<div class="plate" id="rv-${i}"></div><div class="cap"><span>Object ${i+1}</span></div>`;
       grid.appendChild(div);
-      setTimeout(()=>{ const c=document.getElementById(`rv-${i}`); if(c) makePCRenderer(c,data.points,0x4FC3F7); },50);
+      document.getElementById('recv-preview').hidden=false;
+      makePCRenderer(document.getElementById(`rv-${i}`),data.points,INK);
     }
-    document.getElementById('recv-preview').style.display='block';
-    status('load-status','4 stego objects loaded ✓  Ready to decode.','ok');
-  } catch(e) {
-    status('load-status','Load failed: '+e.message,'err');
-  }
+    status('load-status','Four objects loaded. Ready to decode.','ok');
+  }catch(e){status('load-status','Load failed: '+e.message,'err');}
+  busy('load-btn',false);
 }
 
-async function decodeMessage() {
+async function decodeMessage(){
   const tradeId=document.getElementById('r-trade-id').value.trim();
   const passphrase=document.getElementById('r-passphrase').value;
-  if(!tradeId||!passphrase) { status('decode-status','Enter Trade ID and passphrase','err'); return; }
-
-  status('decode-status','Running BCH + Chase-5 decoding...','info');
-  const box=document.getElementById('decode-result'); box.style.display='none';
-
-  try {
-    const res=await fetch('/api/decode',{method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({trade_id:tradeId,passphrase})});
-    const data=await res.json();
-
-    if(data.error) { status('decode-status',data.error,'err'); return; }
-
-    box.style.display='block';
-    const title=document.getElementById('decode-title');
-    const msg=document.getElementById('decode-msg');
-    const meta=document.getElementById('decode-meta');
-
-    if(data.success && data.message) {
-      box.className='decode-box ok';
-      title.className='decode-title ok'; title.textContent='DECODED SUCCESSFULLY ✓';
-      msg.textContent=data.message;
-      meta.innerHTML=`Chunks recovered: ${data.chunks_ok} / 4<br>Trade ID: ${tradeId}`;
-      status('decode-status','Message recovered ✓','ok');
-    } else {
-      box.className='decode-box fail';
-      title.className='decode-title fail'; title.textContent='DECODE FAILED ✗';
-      msg.textContent='—';
-      meta.innerHTML=`Chunks recovered: ${data.chunks_ok} / 4<br>
-        ${data.chunks_ok<2?'Wrong passphrase or too many bit errors':'Partial recovery — try decoding again'}<br>
-        Trade ID: ${tradeId}`;
-      status('decode-status',`Decode failed — ${data.chunks_ok}/4 chunks recovered`,'err');
-    }
-  } catch(e) {
-    status('decode-status','Decode failed: '+e.message,'err');
-  }
+  if(!tradeId||!passphrase){status('decode-status','Enter both the trade ID and the passphrase.','err');return;}
+  status('decode-status','Extracting bits and running BCH + Chase-5 decoding…','info');
+  busy('decode-btn',true,'Decoding…');
+  const box=document.getElementById('decode-result'); box.hidden=true;
+  try{
+    const data=await fetch('/api/decode',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({trade_id:tradeId,passphrase})}).then(r=>r.json());
+    if(data.error){status('decode-status',data.error,'err');busy('decode-btn',false);return;}
+    clearStatus('decode-status');
+    box.hidden=false;
+    const ok=data.success&&data.message;
+    box.className='decoded '+(ok?'ok':'fail');
+    document.getElementById('decode-title').textContent=ok?'Message recovered':'Could not decode';
+    const msgEl=document.getElementById('decode-msg'); msgEl.textContent=ok?data.message:''; msgEl.hidden=!ok;
+    document.getElementById('decode-chunks').innerHTML=
+      [0,1,2,3].map(i=>`<span class="chunk${i<data.chunks_ok?' on':''}"></span>`).join('')+
+      `<span class="num" style="margin-left:6px">${data.chunks_ok} of 4 chunks recovered</span>`;
+    document.getElementById('decode-meta').textContent = ok ? `Trade ID ${tradeId}` :
+      (data.chunks_ok===4 ? 'All chunks were recovered, so the passphrase is most likely wrong.'
+       : data.chunks_ok<2 ? 'Wrong passphrase or too many bit errors.' : 'Partial recovery. Try decoding again.');
+  }catch(e){status('decode-status','Decoding failed: '+e.message,'err');}
+  busy('decode-btn',false);
 }
 
-function switchTab(tab, btn) {
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('tab-'+tab).classList.add('active');
-  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
+document.getElementById('s-message').addEventListener('input',e=>{document.getElementById('msg-count').textContent=`${e.target.value.length} / 16`;});
+
+function switchTab(tab,btn){
+  document.getElementById('tab-sender').hidden = tab!=='sender';
+  document.getElementById('tab-receiver').hidden = tab!=='receiver';
+  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t===btn));
 }
 
 buildSenderSlots();

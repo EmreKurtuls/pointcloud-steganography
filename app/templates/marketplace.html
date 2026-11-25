@@ -2,491 +2,550 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>point.market</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Point.Market</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#07080f;--surface:#0d0f1a;--border:#1a1d2e;--accent:#3d7fff;--text:#c8d0e8;--muted:#4a5068;--success:#3dffaa;--sold:#ff4a4a}
+:root{
+  --paper:#FFFFFF; --plate:#F3F3F1; --plate-2:#E9E9E6;
+  --ink:#141414; --ink-2:#5F5F5F; --ink-3:#6E6E6A; --rule:#DCDCDA;
+  --navy:#1F3A5F; --navy-2:#152A45; --navy-tint:#E8EDF3;
+  --ok:#1E6B3A; --ok-tint:#E9F3EC; --err:#A3241B; --err-tint:#F8EAE8;
+  --display:"Libre Caslon Display",Georgia,"Times New Roman",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --bar:64px;
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh}
-nav{display:flex;align-items:center;padding:14px 28px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:100}
-.logo{font-size:22px;font-weight:800;letter-spacing:-0.5px}.logo span{color:var(--accent)}
-.nav-tabs{margin-left:32px;display:flex;gap:0}
-.nav-tab{padding:8px 16px;cursor:pointer;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;
-         color:var(--muted);border-bottom:2px solid transparent;transition:.15s}
-.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
-.nav-right{margin-left:auto;display:flex;gap:10px;align-items:center}
-.live-dot{color:var(--success)}
-.btn{padding:8px 14px;border:none;border-radius:5px;cursor:pointer;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:1px;transition:.15s}
-.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{opacity:.85}
-.btn-secondary{background:var(--surface);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{border-color:var(--accent)}
-.btn-sm{padding:5px 10px;font-size:10px}
-main{display:grid;grid-template-columns:200px 1fr 320px;min-height:calc(100vh - 53px)}
-aside{padding:16px 12px;border-right:1px solid var(--border);overflow-y:auto;max-height:calc(100vh - 53px)}
-.content{padding:18px 20px;overflow-y:auto;max-height:calc(100vh - 53px)}
-.detail-panel{border-left:1px solid var(--border);overflow-y:auto;max-height:calc(100vh - 53px);position:sticky;top:53px}
-.filter-title{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted);margin-bottom:8px;margin-top:14px}
-.filter-title:first-child{margin-top:0}
-.filter-btn{display:block;width:100%;padding:6px 10px;margin-bottom:2px;background:transparent;
-            border:1px solid transparent;border-radius:4px;color:var(--muted);
-            font-family:'Space Mono',monospace;font-size:10px;cursor:pointer;text-align:left;transition:.15s}
-.filter-btn:hover,.filter-btn.active{background:rgba(61,127,255,.08);border-color:rgba(61,127,255,.3);color:var(--text)}
-.filter-btn.active{color:var(--accent)}
-.form-input{width:100%;padding:6px 8px;background:var(--bg);border:1px solid var(--border);
-            border-radius:4px;color:var(--text);font-family:'Space Mono',monospace;font-size:10px;margin-bottom:6px}
-.form-input:focus{outline:none;border-color:var(--accent)}
-select.form-input option{background:var(--surface)}
-.content-header{display:flex;align-items:center;margin-bottom:12px}
-.content-title{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px}
-.count-badge{margin-left:8px;background:rgba(61,127,255,.15);color:var(--accent);font-family:'Space Mono',monospace;font-size:10px;padding:1px 7px;border-radius:8px}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;cursor:pointer;transition:.18s}
-.card:hover{border-color:var(--accent);transform:translateY(-1px)}
-.card.selected{border-color:var(--accent);box-shadow:0 0 12px rgba(61,127,255,.2)}
-.card-thumb{height:110px;background:#050508;position:relative}
-.stego-badge{position:absolute;top:5px;right:5px;background:rgba(239,154,154,.15);color:#ef9a9a;
-             font-family:'Space Mono',monospace;font-size:8px;padding:2px 5px;border-radius:3px;
-             border:1px solid rgba(239,154,154,.3);letter-spacing:1px}
-.card-body{padding:8px 10px}
-.card-name{font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.card-seller{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);margin-top:2px}
-.card-price{font-family:'Space Mono',monospace;font-size:12px;color:var(--accent);font-weight:700;margin-top:3px}
-.detail-wrap{padding:18px}
-.detail-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
-              height:400px;color:var(--muted);font-family:'Space Mono',monospace;font-size:10px;
-              letter-spacing:1px;text-align:center;gap:8px}
-.detail-canvas-wrap{width:100%;height:200px;background:#050508;border-radius:5px;overflow:hidden;margin-bottom:10px}
-.bundle-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
-.bundle-thumb{height:120px;background:#050508;border-radius:4px;overflow:hidden;position:relative}
-.bundle-label{position:absolute;bottom:4px;left:6px;font-family:'Space Mono',monospace;font-size:8px;color:rgba(239,154,154,.7)}
-.detail-name{font-size:16px;font-weight:800;margin-bottom:3px}
-.detail-meta{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);line-height:1.8;margin-bottom:8px}
-.detail-price{font-family:'Space Mono',monospace;font-size:20px;color:var(--accent);font-weight:700;margin-bottom:12px}
-.detail-desc{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);line-height:1.7;
-             margin-bottom:12px;padding:8px;background:var(--bg);border-radius:4px;border:1px solid var(--border)}
-.receipt-box{background:rgba(61,255,170,.05);border:1px solid rgba(61,255,170,.2);border-radius:5px;
-             padding:10px;font-family:'Space Mono',monospace;font-size:10px;line-height:2;
-             color:var(--success);display:none;margin-top:10px}
-.trade-id-val{font-size:11px;font-weight:700;letter-spacing:2px;display:block;margin-top:4px}
-.buyer-input{margin-bottom:8px}
-.history-list{padding:8px 0}
-.history-row{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);gap:10px}
-.history-row:last-child{border-bottom:none}
-.hist-item{flex:1;min-width:0}
-.hist-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hist-meta{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);margin-top:2px}
-.hist-price{font-family:'Space Mono',monospace;font-size:12px;color:var(--accent);font-weight:700;white-space:nowrap}
-.hist-tid{font-family:'Space Mono',monospace;font-size:8px;color:var(--muted);margin-top:2px}
-.stego-dot{width:6px;height:6px;border-radius:50%;background:#ef9a9a;flex-shrink:0}
-.normal-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--paper);color:var(--ink);font:15px/1.5 var(--sans);min-height:100vh}
+::selection{background:var(--navy);color:#fff}
+:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+button,input,select{font:inherit;color:inherit}
+.num{font-variant-numeric:tabular-nums}
+.mono{font-family:var(--mono);font-size:.92em;letter-spacing:0}
+
+/* top bar */
+.topbar{position:sticky;top:0;z-index:20;height:var(--bar);background:var(--paper);border-bottom:1px solid var(--ink);
+  display:flex;align-items:center;gap:32px;padding:0 32px}
+.wordmark{font-family:var(--display);font-size:26px;line-height:1;letter-spacing:.01em;white-space:nowrap}
+.tabs{display:flex;gap:4px;height:100%}
+.tab{background:none;border:0;padding:0 14px;height:100%;cursor:pointer;color:var(--ink-2);font-size:15px;
+  box-shadow:inset 0 -2px 0 transparent;transition:color .15s,box-shadow .15s}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);font-weight:600;box-shadow:inset 0 -2px 0 var(--ink)}
+.bar-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.count{color:var(--ink-2);font-size:14px;white-space:nowrap}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 16px;border:1px solid var(--ink);
+  background:var(--paper);color:var(--ink);font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;
+  transition:background-color .15s,color .15s,border-color .15s}
+.btn:hover{background:var(--plate)}
+.btn-primary{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn-primary:hover{background:var(--navy-2);border-color:var(--navy-2)}
+.btn-quiet{border-color:var(--rule);color:var(--ink-2)}
+.btn-quiet:hover{border-color:var(--ink);color:var(--ink);background:var(--paper)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-block{width:100%;height:46px;font-size:15px}
+
+/* layout */
+.layout{display:grid;grid-template-columns:240px minmax(0,1fr) 400px;min-height:calc(100vh - var(--bar))}
+.index{border-right:1px solid var(--rule);padding:24px 0 32px;position:sticky;top:var(--bar);
+  height:calc(100vh - var(--bar));overflow-y:auto}
+.index h2{font-size:13px;font-weight:600;color:var(--ink-2);padding:0 24px 8px}
+.cat-list{list-style:none}
+.cat{display:flex;justify-content:space-between;width:100%;padding:7px 24px;background:none;border:0;cursor:pointer;
+  text-align:left;font-size:15px;color:var(--ink)}
+.cat:hover{background:var(--plate)}
+.cat[aria-pressed="true"]{background:var(--navy-tint);color:var(--navy);font-weight:600}
+.cat .n{color:var(--ink-3);font-weight:400}
+.cat[aria-pressed="true"] .n{color:var(--navy)}
+
+.sale{padding:28px 32px 120px;min-width:0}
+.sale-head{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;padding-bottom:18px;border-bottom:1px solid var(--rule);margin-bottom:24px}
+.sale-head h1{font-family:var(--display);font-weight:400;font-size:36px;line-height:1.1;letter-spacing:-.01em}
+.sale-head p{color:var(--ink-2)}
+
+.lots{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(220px,100%),1fr));gap:32px 24px}
+.lot{display:block;width:100%;text-align:left;background:none;border:0;padding:0;cursor:pointer}
+.lot{min-width:0}
+.lot>span{display:block}
+.lot-meta{display:flex!important}
+.lot .plate{height:200px;outline:1px solid transparent;outline-offset:-1px;transition:outline-color .15s}
+.lot:hover .plate{outline-color:var(--ink-3)}
+.lot[aria-current="true"] .plate{outline:2px solid var(--navy);outline-offset:-2px}
+.lot-no{font-family:var(--display);font-size:28px;line-height:1;margin-top:14px}
+.lot-name{font-weight:600;margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lot-meta{display:flex;justify-content:space-between;gap:12px;color:var(--ink-2);font-size:14px;margin-top:2px}
+.lot-meta b{color:var(--ink);font-weight:600}
+
+.plate{position:relative;background:var(--plate);overflow:hidden;touch-action:none}
+.plate canvas{position:absolute;inset:0;width:100%;height:100%;cursor:grab}
+.plate canvas:active{cursor:grabbing}
+.plate.loading{animation:pulse 1.4s ease-in-out infinite alternate}
+@keyframes pulse{from{background-color:var(--plate)}to{background-color:#E7E7E4}}}
+
+.empty{padding:56px 0;color:var(--ink-2);max-width:46ch}
+.empty strong{display:block;color:var(--ink);font-size:17px;margin-bottom:4px}
+
+/* detail */
+.detail{border-left:1px solid var(--rule);position:sticky;top:var(--bar);height:calc(100vh - var(--bar));overflow-y:auto;padding:24px 28px 40px}
+.detail .plate.big{height:300px}
+.bundle-plates{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bundle-plates .plate{height:170px}
+.plate-cap{position:absolute;left:10px;bottom:8px;font-size:12px;color:var(--ink-2);pointer-events:none}
+.hint{font-size:13px;color:var(--ink-3);margin-top:8px}
+.d-no{font-family:var(--display);font-size:40px;line-height:1;margin-top:22px}
+.d-name{font-size:22px;font-weight:700;line-height:1.25;margin-top:8px;overflow-wrap:anywhere}
+.meta{display:grid;grid-template-columns:96px 1fr;gap:6px 12px;margin:18px 0;padding:14px 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);font-size:14px}
+.meta dt{color:var(--ink-2)}
+.meta dd{overflow-wrap:anywhere}
+.desc{color:var(--ink-2);margin-bottom:18px;max-width:60ch}
+.price{font-size:32px;font-weight:700;line-height:1;margin-bottom:20px}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field label{font-size:14px;font-weight:600}
+.input{height:44px;padding:0 12px;border:1px solid var(--ink-3);background:var(--paper);font-size:15px;width:100%;border-radius:0}
+.input:hover{border-color:var(--ink)}
+.input:focus{outline:2px solid var(--navy);outline-offset:-1px;border-color:var(--navy)}
+.input::placeholder{color:var(--ink-3)}
+select.input{appearance:none;background:var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23141414' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 12px center;padding-right:34px}
+.receipt{margin-top:18px;border:1px solid var(--ink);padding:18px}
+.receipt h3{font-size:15px;color:var(--ok);margin-bottom:10px}
+.receipt .tid{font-family:var(--mono);font-size:18px;font-weight:700;letter-spacing:.02em;margin-top:6px;overflow-wrap:anywhere}
+.receipt p{color:var(--ink-2);font-size:14px}
+.detail-empty{height:100%;display:flex;flex-direction:column;justify-content:center;color:var(--ink-2);max-width:30ch}
+.detail-empty strong{color:var(--ink);font-family:var(--display);font-weight:400;font-size:28px;line-height:1.15;margin-bottom:8px}
+
+/* list form */
+.sell{padding:20px 24px 24px;border-bottom:1px solid var(--rule);margin-bottom:20px}
+.sell h2{padding:0;font-size:17px;color:var(--ink);margin-bottom:14px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:3px;padding:3px;border:1px solid var(--ink);margin-bottom:14px}
+.seg button{height:36px;border:0;background:var(--paper);cursor:pointer;font-size:14px}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff;font-weight:600}
+.sell .field{margin-bottom:10px}
+.sell .input{height:40px;font-size:14px}
+.slot{border:1px solid var(--rule);padding:10px;margin-bottom:8px}
+.slot-head{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600;margin-bottom:6px}
+.slot-head button{background:none;border:0;color:var(--ink-2);cursor:pointer;font-size:13px;text-decoration:underline;text-underline-offset:2px}
+.slot .input{margin-bottom:6px}
+.form-error{color:var(--err);font-size:14px;margin:4px 0 10px}
+
+/* history */
+.history{width:100%;border-collapse:collapse;font-size:14px}
+.history th{text-align:left;font-weight:600;color:var(--ink-2);padding:10px 12px;border-bottom:1px solid var(--ink)}
+.history td{padding:12px;border-bottom:1px solid var(--rule);vertical-align:top}
+.history td.r,.history th.r{text-align:right}
+.history .item{font-weight:600}
+.history td.mono,.history td.num{white-space:nowrap}
+.history tr:hover td{background:var(--plate)}
+
+@media (max-width:1180px){
+  .layout{grid-template-columns:220px minmax(0,1fr)}
+  .detail{grid-column:1/-1;position:static;height:auto;border-left:0;border-top:1px solid var(--ink);padding:28px 32px 48px}
+  .detail-empty{height:auto}
+}
+@media (max-width:760px){
+  .topbar{height:auto;flex-wrap:wrap;gap:8px 16px;padding:12px 16px}
+  .tabs{height:40px;order:3;width:100%}
+  .bar-right{gap:8px}.count{display:none}
+  .layout{grid-template-columns:1fr}
+  .index{position:static;height:auto;border-right:0;border-bottom:1px solid var(--rule);padding:12px 0}
+  .index h2{display:none}
+  .cat-list{display:flex;overflow-x:auto;gap:4px;padding:0 16px}
+  .cat{width:auto;white-space:nowrap;padding:6px 12px;border:1px solid var(--rule);gap:8px}
+  .sale{padding:20px 16px 48px}
+  .sale-head h1{font-size:28px}
+  .lots{grid-template-columns:repeat(2,minmax(0,1fr));gap:24px 12px}
+  .bar-right .btn-quiet{display:none}
+  .lot-meta{flex-direction:column;gap:0}
+  .lot .plate{height:150px}
+  .detail{padding:24px 16px 40px}
+  .history th:nth-child(4),.history td:nth-child(4){display:none}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
 
-<nav>
-  <div class="logo">POINT<span>.</span>MARKET</div>
-  <div class="nav-tabs">
-    <div class="nav-tab active" onclick="switchView('browse',this)">BROWSE</div>
-    <div class="nav-tab" onclick="switchView('history',this)">TRADE HISTORY</div>
+<header class="topbar">
+  <div class="wordmark">Point.Market</div>
+  <nav class="tabs" role="tablist" aria-label="Views">
+    <button class="tab" role="tab" aria-selected="true" onclick="switchView('browse',this)">Browse</button>
+    <button class="tab" role="tab" aria-selected="false" onclick="switchView('history',this)">Trade history</button>
+  </nav>
+  <div class="bar-right">
+    <span class="count num" id="nav-count">Loading lots…</span>
+    <button class="btn btn-quiet" onclick="refreshListings()" title="Regenerate all listings from the dataset">Reset listings</button>
+    <button class="btn btn-primary" id="sell-btn" onclick="toggleAddForm()" aria-expanded="false">List an item</button>
   </div>
-  <div class="nav-right">
-    <span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted)">
-      <span class="live-dot">●</span> LIVE
-    </span>
-    <span id="nav-count" style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted)">— LISTINGS</span>
-    <button class="btn btn-secondary btn-sm" onclick="toggleAddForm()">+ LIST ITEM</button>
-    <button class="btn btn-secondary btn-sm" onclick="refreshListings()" title="Regenerate all listings">↺ REFRESH</button>
-  </div>
-</nav>
+</header>
 
-<main>
-  <aside>
-    <div class="filter-title">CATEGORY</div>
-    <div id="cat-filters">
-      <button class="filter-btn active" onclick="filterCat('all',this)">All</button>
-    </div>
-
-    <div id="add-form" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
-      <div class="filter-title">LISTING TYPE</div>
-      <div style="display:flex;gap:4px;margin-bottom:8px">
-        <button class="btn btn-primary btn-sm" style="flex:1;font-size:9px"
-                onclick="setListingType('single',this)" id="type-single">SINGLE</button>
-        <button class="btn btn-secondary btn-sm" style="flex:1;font-size:9px"
-                onclick="setListingType('bundle',this)" id="type-bundle">BUNDLE</button>
+<div class="layout">
+  <aside class="index">
+    <section class="sell" id="add-form" hidden>
+      <h2>List an item</h2>
+      <div class="seg" role="group" aria-label="Listing type">
+        <button id="type-single" aria-pressed="true" onclick="setListingType('single',this)">Single object</button>
+        <button id="type-bundle" aria-pressed="false" onclick="setListingType('bundle',this)">Bundle</button>
       </div>
-      <input class="form-input" id="f-seller" placeholder="Your username">
-      <input class="form-input" id="f-listing-name" placeholder="Listing title">
-      <input class="form-input" id="f-price" placeholder="Price ($)" type="number" step="0.01">
-      <input class="form-input" id="f-desc" placeholder="Description (optional)">
+      <div class="field"><label for="f-seller">Seller username</label><input class="input" id="f-seller" autocomplete="off"></div>
+      <div class="field"><label for="f-listing-name">Listing title</label><input class="input" id="f-listing-name" placeholder="Optional"></div>
+      <div class="field"><label for="f-price">Price ($)</label><input class="input num" id="f-price" type="number" step="0.01" min="0"></div>
+      <div class="field"><label for="f-desc">Description</label><input class="input" id="f-desc" placeholder="Optional"></div>
       <div id="single-fields">
-        <div class="filter-title" style="margin-top:6px">OBJECT</div>
-        <select class="form-input" id="f-cat" onchange="loadCategoryModels()">
-          <option>Loading...</option>
-        </select>
-        <select class="form-input" id="f-model"><option>Loading...</option></select>
+        <div class="field"><label for="f-cat">Category</label><select class="input" id="f-cat" onchange="loadCategoryModels()"><option>Loading…</option></select></div>
+        <div class="field"><label for="f-model">Object</label><select class="input" id="f-model"><option>Loading…</option></select></div>
       </div>
-      <div id="bundle-fields" style="display:none">
-        <div class="filter-title" style="margin-top:6px">OBJECTS IN BUNDLE (up to 4)</div>
+      <div id="bundle-fields" hidden>
+        <div class="field"><label>Objects in bundle (2 to 4)</label></div>
         <div id="bundle-slots"></div>
-        <button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px"
-                onclick="addBundleSlot()" id="add-slot-btn">+ ADD OBJECT</button>
+        <button class="btn btn-quiet" style="width:100%;margin-bottom:10px" onclick="addBundleSlot()" id="add-slot-btn">Add object</button>
       </div>
-      <button class="btn btn-primary" style="width:100%;font-size:10px;margin-top:4px"
-              onclick="submitListing()">LIST</button>
-    </div>
+      <p class="form-error" id="form-error" role="alert" hidden></p>
+      <button class="btn btn-primary btn-block" onclick="submitListing()">Publish listing</button>
+    </section>
+
+    <h2>Categories</h2>
+    <ul class="cat-list" id="cat-filters"></ul>
   </aside>
 
-  <div class="content" id="view-browse">
-    <div class="content-header">
-      <span class="content-title">AVAILABLE</span>
-      <span class="count-badge" id="count-badge">0</span>
+  <main class="sale" id="view-browse">
+    <div class="sale-head">
+      <h1 id="sale-title">3D Objects &amp; Bundles</h1>
+      <p class="num" id="count-badge">Point clouds, 4096 points each</p>
     </div>
-    <div class="grid" id="listings-grid"></div>
-  </div>
+    <div class="lots" id="listings-grid"></div>
+  </main>
 
-  <div class="content" id="view-history" style="display:none">
-    <div class="content-header">
-      <span class="content-title">TRADE HISTORY</span>
+  <main class="sale" id="view-history" hidden>
+    <div class="sale-head"><h1>Trade history</h1><p>Most recent first</p></div>
+    <div style="overflow-x:auto">
+      <table class="history">
+        <thead><tr><th>Item</th><th>Buyer</th><th>Seller</th><th>Time</th><th>Trade ID</th><th class="r">Price</th></tr></thead>
+        <tbody id="history-list"></tbody>
+      </table>
     </div>
-    <div class="history-list" id="history-list"></div>
-  </div>
+  </main>
 
-  <div class="detail-panel">
-    <div id="detail-inner">
-      <div class="detail-empty">
-        <div style="font-size:28px;opacity:.2">◈</div>
-        <div>SELECT A LISTING<br>TO PREVIEW</div>
-      </div>
+  <aside class="detail" id="detail-inner" aria-live="polite">
+    <div class="detail-empty">
+      <strong>Select a lot</strong>
+      Pick any object on the left to inspect it in 3D. Drag a plate to rotate it.
     </div>
-  </div>
-</main>
+  </aside>
+</div>
 
 <script>
+/* ── Point-cloud plates: 2D canvas, no WebGL context per card ─────────────── */
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const pcCache = {};
 
-function makePCRenderer(container, points, color=0x4FC3F7, autoRotate=true) {
-  const W=container.clientWidth||280, H=container.clientHeight||200;
-  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
-  renderer.setSize(W,H); renderer.setClearColor(0x050508);
-  container.innerHTML=''; container.appendChild(renderer.domElement);
-  const scene=new THREE.Scene(), camera=new THREE.PerspectiveCamera(45,W/H,0.01,100);
-  camera.position.set(0,0,2.8);
-  const geo=new THREE.BufferGeometry();
-  const flat = new Float32Array(points.flat());
-  geo.setAttribute('position',new THREE.BufferAttribute(flat,3));
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 
-  let sumY=0;
-  for(let i=1;i<flat.length;i+=3) sumY+=flat[i];
-  const avgY = sumY/(flat.length/3);
-
-  const mesh=new THREE.Points(geo,new THREE.PointsMaterial({size:0.013,color,sizeAttenuation:true}));
-  if(avgY < -0.1) mesh.rotation.x = Math.PI;
-  scene.add(mesh);
-
-  let drag=false,px=0,py=0,rx=avgY<-0.1?Math.PI:0.2,ry=0;
-  const el=renderer.domElement;
-  el.addEventListener('mousedown',e=>{drag=true;px=e.clientX;py=e.clientY});
-  el.addEventListener('mousemove',e=>{if(!drag)return;ry+=(e.clientX-px)*0.01;rx+=(e.clientY-py)*0.01;px=e.clientX;py=e.clientY});
-  el.addEventListener('mouseup',()=>drag=false);el.addEventListener('mouseleave',()=>drag=false);
-  (function anim(){requestAnimationFrame(anim);if(!drag&&autoRotate)ry+=0.005;mesh.rotation.x=rx;mesh.rotation.y=ry;renderer.render(scene,camera)})();
+function makePCRenderer(container, points, opts={}){
+  const autoRotate = !!opts.autoRotate && !REDUCED;
+  const rgb = opts.rgb || [20,20,20];
+  container.classList.remove('loading');
+  container.querySelectorAll('canvas').forEach(c=>c.remove());
+  const canvas=document.createElement('canvas');
+  canvas.setAttribute('aria-hidden','true');
+  container.prepend(canvas);
+  const ctx=canvas.getContext('2d');
+  const n=points.length, P=new Float32Array(n*3);
+  // ModelNet40 is Z-up: map (x, y, z) -> screen (x, z, -y)
+  for(let i=0;i<n;i++){const p=points[i];P[i*3]=p[0];P[i*3+1]=p[2];P[i*3+2]=-p[1];}
+  // fit by the 98th-percentile radius so one stray point cannot shrink the object
+  const R=new Float32Array(n); for(let i=0;i<n;i++) R[i]=Math.hypot(P[i*3],P[i*3+1],P[i*3+2]);
+  R.sort(); const fitK=Math.min(3,1/Math.max(R[Math.floor((n-1)*0.98)]||1,0.2));
+  let rx=0.35, ry=0.6;
+  const alphas=[.22,.42,.66,.92];
+  function draw(){
+    const w=canvas.width,h=canvas.height; if(!w||!h) return;
+    ctx.clearRect(0,0,w,h);
+    const cx=Math.cos(rx),sx=Math.sin(rx),cy=Math.cos(ry),sy=Math.sin(ry);
+    const s=Math.min(w,h)*0.4*fitK, ox=w/2, oy=h/2, r=Math.max(1.2,Math.min(w,h)/240)*1.1;
+    const buckets=[[],[],[],[]];
+    for(let i=0;i<n;i++){
+      const x=P[i*3],y=P[i*3+1],z=P[i*3+2];
+      const x1=x*cy+z*sy, z1=-x*sy+z*cy;
+      const y2=y*cx-z1*sx, z2=y*sx+z1*cx;
+      const f=2.8/(2.8-z2);
+      const b=Math.max(0,Math.min(3,((z2+1)*2)|0));
+      buckets[b].push(ox+x1*f*s, oy-y2*f*s);
+    }
+    for(let b=0;b<4;b++){
+      ctx.fillStyle=`rgba(${rgb[0]},${rgb[1]},${rgb[2]},${alphas[b]})`;
+      const a=buckets[b];
+      for(let k=0;k<a.length;k+=2) ctx.fillRect(a[k]-r/2,a[k+1]-r/2,r,r);
+    }
+  }
+  function fit(){
+    const d=Math.min(devicePixelRatio||1,2), rc=container.getBoundingClientRect();
+    canvas.width=Math.round(rc.width*d); canvas.height=Math.round(rc.height*d); draw();
+  }
+  let drag=false,px=0,py=0;
+  canvas.addEventListener('pointerdown',e=>{drag=true;px=e.clientX;py=e.clientY;canvas.setPointerCapture(e.pointerId);e.stopPropagation()});
+  canvas.addEventListener('pointermove',e=>{if(!drag)return;ry+=(e.clientX-px)*0.01;rx+=(e.clientY-py)*0.01;px=e.clientX;py=e.clientY;draw()});
+  canvas.addEventListener('pointerup',()=>drag=false);
+  canvas.addEventListener('pointercancel',()=>drag=false);
+  new ResizeObserver(fit).observe(container);
+  fit();
+  if(autoRotate){(function anim(){ if(!canvas.isConnected) return; if(!drag){ry+=0.004;draw();} requestAnimationFrame(anim); })();}
 }
 
-let allListings=[], activeFilter='all', shapeNames={}, allCategories=[];
+/* ── State ─────────────────────────────────────────────────────────────────── */
+let allListings=[], activeFilter='all', shapeNames={}, allCategories=[], selectedId=null;
 
-function buildCategoryFilters(cats) {
-  const wrap = document.getElementById('cat-filters');
-  wrap.innerHTML = '';
-  const allBtn = document.createElement('button');
-  allBtn.className = 'filter-btn' + (activeFilter==='all' ? ' active' : '');
-  allBtn.textContent = 'All';
-  allBtn.onclick = () => filterCat('all', allBtn);
-  wrap.appendChild(allBtn);
-  cats.forEach(cat => {
-    const btn = document.createElement('button');
-    btn.className = 'filter-btn' + (activeFilter===cat ? ' active' : '');
-    btn.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
-    btn.onclick = () => filterCat(cat, btn);
-    wrap.appendChild(btn);
-  });
-  const bndl = document.createElement('button');
-  bndl.className = 'filter-btn' + (activeFilter==='bundle' ? ' active' : '');
-  bndl.textContent = 'Bundles';
-  bndl.onclick = () => filterCat('bundle', bndl);
-  wrap.appendChild(bndl);
+function title(c){return c.charAt(0).toUpperCase()+c.slice(1).replace(/_/g,' ')}
+function isBundle(L){return L.category==='bundle'||L.stego}
+function lotNo(L){return allListings.findIndex(x=>x.id===L.id)+1}
+
+function buildCategoryFilters(cats){
+  const wrap=document.getElementById('cat-filters');
+  const counts={}; allListings.forEach(L=>{const k=isBundle(L)?'bundle':L.category;counts[k]=(counts[k]||0)+1});
+  const items=[['all','All lots',allListings.length], ...cats.map(c=>[c,title(c),counts[c]||0]), ['bundle','Bundles',counts.bundle||0]];
+  wrap.innerHTML=items.map(([k,label,n])=>
+    `<li><button class="cat" aria-pressed="${activeFilter===k}" data-cat="${esc(k)}"><span>${esc(label)}</span><span class="n num">${n}</span></button></li>`).join('');
+  wrap.querySelectorAll('.cat').forEach(b=>b.onclick=()=>filterCat(b.dataset.cat,b));
 }
 
-function buildCategoryDropdowns(cats) {
-  const opts = cats.map(c=>`<option value="${c}">${c.charAt(0).toUpperCase()+c.slice(1)}</option>`).join('');
-  const sel = document.getElementById('f-cat');
-  if(sel && opts) { sel.innerHTML = opts; loadCategoryModels(); }
+function buildCategoryDropdowns(cats){
+  const opts=cats.map(c=>`<option value="${esc(c)}">${esc(title(c))}</option>`).join('');
+  const sel=document.getElementById('f-cat');
+  if(sel&&opts){sel.innerHTML=opts;loadCategoryModels();}
 }
 
-async function init() {
+async function init(){
   await loadListings();
-
-  fetch('/api/categories')
-    .then(r => r.json())
-    .then(cats => {
-      allCategories = cats;
-      buildCategoryDropdowns(cats);
-    })
-    .catch(() => {
-      const fallback = [...new Set(allListings.map(L=>L.category).filter(c=>c&&c!=='bundle'))].sort();
-      allCategories = fallback;
-      buildCategoryDropdowns(fallback);
-    });
+  fetch('/api/categories').then(r=>r.json()).then(cats=>{allCategories=cats;buildCategoryDropdowns(cats);})
+    .catch(()=>{const fb=[...new Set(allListings.map(L=>L.category).filter(c=>c&&c!=='bundle'))].sort();allCategories=fb;buildCategoryDropdowns(fb);});
 }
 
-async function loadListings() {
-  const newListings = await fetch('/api/listings').then(r=>r.json());
-  const newIds = newListings.map(L=>L.id).join(',');
-  const oldIds = allListings.map(L=>L.id).join(',');
-  allListings = newListings;
-  document.getElementById('nav-count').textContent = allListings.length + ' LISTINGS';
-  const cats = [...new Set(newListings.map(L=>L.category).filter(c=>c&&c!=='bundle'))].sort();
+async function loadListings(){
+  const newListings=await fetch('/api/listings').then(r=>r.json());
+  const newIds=newListings.map(L=>L.id).join(','), oldIds=allListings.map(L=>L.id).join(',');
+  allListings=newListings;
+  document.getElementById('nav-count').textContent=`${allListings.length} lots in this sale`;
+  const cats=[...new Set(newListings.map(L=>L.category).filter(c=>c&&c!=='bundle'))].sort();
   buildCategoryFilters(cats);
-  if(newIds !== oldIds) renderGrid();
+  if(newIds!==oldIds) renderGrid();
 }
 
-function switchView(v, btn) {
-  document.querySelectorAll('[id^=view-]').forEach(el=>el.style.display='none');
-  document.getElementById('view-'+v).style.display='block';
-  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-  btn.classList.add('active');
+function switchView(v,btn){
+  document.getElementById('view-browse').hidden = v!=='browse';
+  document.getElementById('view-history').hidden = v!=='history';
+  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t===btn));
   if(v==='history') loadHistory();
 }
 
-function filterCat(cat, btn) {
+function filterCat(cat,btn){
   activeFilter=cat;
-  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
+  document.querySelectorAll('.cat').forEach(b=>b.setAttribute('aria-pressed',b===btn));
   renderGrid();
 }
 
-function renderGrid() {
+function renderGrid(){
   const filtered = activeFilter==='all' ? allListings
-                   : allListings.filter(L=>L.category===activeFilter);
-  document.getElementById('count-badge').textContent = filtered.length;
-  const grid = document.getElementById('listings-grid');
-  grid.innerHTML = '';
-  filtered.forEach(L => {
-    const card=document.createElement('div'); card.className='card';
-    const isBundle=L.category==='bundle'||L.stego;
+    : activeFilter==='bundle' ? allListings.filter(isBundle)
+    : allListings.filter(L=>L.category===activeFilter && !isBundle(L));
+  document.getElementById('sale-title').textContent = activeFilter==='all' ? '3D Objects & Bundles'
+    : activeFilter==='bundle' ? 'Bundles' : title(activeFilter);
+  document.getElementById('count-badge').textContent =
+    `${filtered.length} ${filtered.length===1?'lot':'lots'} · point clouds, 4096 points each`;
+  const grid=document.getElementById('listings-grid');
+  if(!filtered.length){
+    grid.innerHTML=`<div class="empty"><strong>No lots here right now</strong>Everything in this category has been sold. Choose another category, or list an item yourself.</div>`;
+    return;
+  }
+  grid.innerHTML='';
+  filtered.forEach(L=>{
+    const card=document.createElement('button');
+    card.className='lot'; card.type='button';
+    card.setAttribute('aria-current', L.id===selectedId);
     card.innerHTML=`
-      <div class="card-thumb" id="t-${L.id}">
-        ${isBundle?'<div class="stego-badge">BUNDLE</div>':''}
-      </div>
-      <div class="card-body">
-        <div class="card-name">${L.name}</div>
-        <div class="card-seller">@${L.seller}</div>
-        <div class="card-price">$${parseFloat(L.price).toFixed(2)}</div>
-      </div>`;
-    card.onclick=()=>selectListing(L.id, card);
+      <span class="plate loading" id="t-${esc(L.id)}"></span>
+      <span class="lot-no num">Lot ${lotNo(L)}</span>
+      <span class="lot-name">${esc(L.name)}</span>
+      <span class="lot-meta"><span>${isBundle(L)?'Bundle · ':''}@${esc(L.seller)}</span><b class="num">$${parseFloat(L.price).toFixed(2)}</b></span>`;
+    card.onclick=()=>selectListing(L.id,card);
     grid.appendChild(card);
-    const thumb=document.getElementById(`t-${L.id}`);
-    const color=isBundle?0xef9a9a:0x4FC3F7;
-    if(pcCache[L.id]) {
-      makePCRenderer(thumb, pcCache[L.id], color, true);
-    } else {
-      fetch(`/api/listing/${L.id}/pointcloud`).then(r=>r.json())
-        .then(data=>{
-          pcCache[L.id] = data.points;
-          makePCRenderer(thumb, data.points, color, true);
-        });
-    }
+    const thumb=card.querySelector('.plate');
+    if(pcCache[L.id]) makePCRenderer(thumb,pcCache[L.id]);
+    else fetch(`/api/listing/${encodeURIComponent(L.id)}/pointcloud`).then(r=>r.json())
+      .then(data=>{pcCache[L.id]=data.points;makePCRenderer(thumb,data.points);});
   });
 }
 
-function selectListing(lid, cardEl) {
-  document.querySelectorAll('.card').forEach(c=>c.classList.remove('selected'));
-  if(cardEl) cardEl.classList.add('selected');
+function selectListing(lid,cardEl){
+  selectedId=lid;
+  document.querySelectorAll('.lot').forEach(c=>c.setAttribute('aria-current',c===cardEl));
   const L=allListings.find(x=>x.id===lid); if(!L) return;
-  const isBundle=L.category==='bundle'||L.stego;
+  const bundle=isBundle(L);
   const inner=document.getElementById('detail-inner');
   inner.innerHTML=`
-    <div class="detail-wrap">
-      ${isBundle
-        ? `<div class="bundle-grid" id="bundle-grid"></div>`
-        : `<div class="detail-canvas-wrap" id="detail-canvas"></div>`}
-      <div class="detail-name">${L.name}
-        ${isBundle?'<span style="font-size:11px;color:#ef9a9a;font-weight:400"> · BUNDLE</span>':''}
-      </div>
-      <div class="detail-meta">@${L.seller} · ${L.category}<br>ID: ${L.id}</div>
-      <div class="detail-price">$${parseFloat(L.price).toFixed(2)}</div>
-      <div class="detail-desc">${L.desc||'No description.'}</div>
-      <input class="form-input buyer-input" id="buyer-name" placeholder="Your username">
-      <button class="btn btn-primary" style="width:100%;padding:10px"
-              onclick="buyItem('${L.id}')">🛒 BUY — INITIATE TRADE</button>
-      <div class="receipt-box" id="receipt-${L.id}"></div>
-    </div>`;
+    ${bundle?`<div class="bundle-plates" id="bundle-grid"></div>`:`<div class="plate big loading" id="detail-canvas"></div>`}
+    <p class="hint">Drag to rotate${bundle?' each object':''}.</p>
+    <div class="d-no num">Lot ${lotNo(L)}</div>
+    <div class="d-name">${esc(L.name)}</div>
+    <dl class="meta">
+      <dt>Seller</dt><dd>@${esc(L.seller)}</dd>
+      <dt>Category</dt><dd>${bundle?'Bundle':esc(title(L.category||''))}</dd>
+      <dt>Listing ID</dt><dd class="mono">${esc(L.id)}</dd>
+    </dl>
+    <p class="desc">${esc(L.desc||'No description.')}</p>
+    <div class="price num">$${parseFloat(L.price).toFixed(2)}</div>
+    <div class="field"><label for="buyer-name">Your username</label><input class="input" id="buyer-name" autocomplete="off" placeholder="anonymous"></div>
+    <button class="btn btn-primary btn-block" id="buy-btn" onclick="buyItem('${esc(L.id)}')">Buy this lot</button>
+    <div id="receipt-${esc(L.id)}"></div>`;
 
-  const renderDetail = (data) => {
-    if(data.bundle && data.all_points) {
-      const bg=document.getElementById('bundle-grid');
-      if(!bg) return;
+  const renderDetail=data=>{
+    if(data.bundle&&data.all_points){
+      const bg=document.getElementById('bundle-grid'); if(!bg) return;
       data.all_points.forEach((pts,i)=>{
-        const div=document.createElement('div'); div.className='bundle-thumb';
-        div.innerHTML=`<div id="bc-${lid}-${i}" style="width:100%;height:100%"></div>
-                       <div class="bundle-label">Object ${i+1}</div>`;
+        const div=document.createElement('div'); div.className='plate';
+        div.innerHTML=`<span class="plate-cap">Object ${i+1}</span>`;
         bg.appendChild(div);
-        setTimeout(()=>{ const c=document.getElementById(`bc-${lid}-${i}`); if(c) makePCRenderer(c,pts,0xef9a9a,true); },50);
+        makePCRenderer(div,pts,{autoRotate:true});
       });
     } else {
       const c=document.getElementById('detail-canvas');
-      if(c) makePCRenderer(c, data.points, isBundle?0xef9a9a:0x4FC3F7);
+      if(c) makePCRenderer(c,data.points,{autoRotate:true});
     }
   };
-
-  if(pcCache['detail_'+lid]) {
-    renderDetail(pcCache['detail_'+lid]);
-  } else {
-    fetch(`/api/listing/${lid}/pointcloud`).then(r=>r.json()).then(data=>{
-      pcCache['detail_'+lid] = data;
-      renderDetail(data);
-    });
-  }
+  if(pcCache['detail_'+lid]) renderDetail(pcCache['detail_'+lid]);
+  else fetch(`/api/listing/${encodeURIComponent(lid)}/pointcloud`).then(r=>r.json()).then(data=>{pcCache['detail_'+lid]=data;renderDetail(data);});
 }
 
-async function buyItem(lid) {
-  const buyer=document.getElementById('buyer-name')?.value||'anonymous';
-  const res=await fetch('/api/buy',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({listing_id:lid, buyer})});
+async function buyItem(lid){
+  const buyer=document.getElementById('buyer-name')?.value.trim()||'anonymous';
+  const btn=document.getElementById('buy-btn'); if(btn){btn.disabled=true;btn.textContent='Processing…';}
+  const res=await fetch('/api/buy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({listing_id:lid,buyer})});
   const data=await res.json();
-  if(data.success) {
-    const r=document.getElementById(`receipt-${lid}`);
-    if(r){r.style.display='block';r.innerHTML=`TRADE CONFIRMED ✓<br>
-      ${data.name}<br>$${data.price} · @${data.seller}<br><br>
-      TRADE ID:<br><span class="trade-id-val">${data.trade_id}</span>`;}
+  const r=document.getElementById(`receipt-${lid}`);
+  if(data.success){
+    if(btn) btn.remove();
+    if(r) r.innerHTML=`<div class="receipt"><h3>Trade confirmed</h3>
+      <p>${esc(data.name)} · <span class="num">$${esc(data.price)}</span> from @${esc(data.seller)}</p>
+      <p style="margin-top:12px">Trade ID</p><div class="tid">${esc(data.trade_id)}</div></div>`;
     delete pcCache[lid]; delete pcCache['detail_'+lid];
     allListings=allListings.filter(L=>L.id!==lid);
     renderGrid();
-    document.getElementById('nav-count').textContent=allListings.length+' LISTINGS';
+    document.getElementById('nav-count').textContent=`${allListings.length} lots in this sale`;
+  } else {
+    if(btn){btn.disabled=false;btn.textContent='Buy this lot';}
+    if(r) r.innerHTML=`<p class="form-error">${esc(data.message||'Purchase failed')}. Refresh the sale and try another lot.</p>`;
   }
 }
 
-let currentListingType = 'single', bundleSlots = [];
+/* ── Listing form ──────────────────────────────────────────────────────────── */
+let currentListingType='single', bundleSlots=[];
 
 function toggleAddForm(){
-  const f=document.getElementById('add-form');
-  f.style.display=f.style.display==='none'?'block':'none';
-  if(f.style.display==='block') loadCategoryModels();
+  const f=document.getElementById('add-form'), b=document.getElementById('sell-btn');
+  f.hidden=!f.hidden; b.setAttribute('aria-expanded',!f.hidden);
+  b.textContent=f.hidden?'List an item':'Close form';
+  if(!f.hidden){loadCategoryModels();document.getElementById('f-seller').focus();}
 }
 
-function setListingType(type, btn) {
-  currentListingType = type;
-  document.getElementById('single-fields').style.display = type==='single'?'block':'none';
-  document.getElementById('bundle-fields').style.display = type==='bundle'?'block':'none';
-  document.getElementById('type-single').className = 'btn btn-sm ' + (type==='single'?'btn-primary':'btn-secondary');
-  document.getElementById('type-bundle').className  = 'btn btn-sm ' + (type==='bundle'?'btn-primary':'btn-secondary');
-  if(type==='bundle' && bundleSlots.length===0) { addBundleSlot(); addBundleSlot(); }
+function setListingType(type){
+  currentListingType=type;
+  document.getElementById('single-fields').hidden = type!=='single';
+  document.getElementById('bundle-fields').hidden = type!=='bundle';
+  document.getElementById('type-single').setAttribute('aria-pressed',type==='single');
+  document.getElementById('type-bundle').setAttribute('aria-pressed',type==='bundle');
+  if(type==='bundle'&&bundleSlots.length===0){addBundleSlot();addBundleSlot();}
 }
 
-async function loadCategoryModels() {
-  const cat = document.getElementById('f-cat')?.value;
-  if(!cat) return;
-  const models = await fetch(`/api/category_models?cat=${cat}`).then(r=>r.json());
-  const sel = document.getElementById('f-model');
-  if(sel) sel.innerHTML = models.map(m=>`<option value="${m}">${m}</option>`).join('');
+async function loadCategoryModels(){
+  const cat=document.getElementById('f-cat')?.value; if(!cat) return;
+  const models=await fetch(`/api/category_models?cat=${encodeURIComponent(cat)}`).then(r=>r.json());
+  const sel=document.getElementById('f-model');
+  if(sel) sel.innerHTML=models.map(m=>`<option value="${esc(m)}">${esc(m)}</option>`).join('');
 }
 
-let bundleSlotCount = 0;
-function addBundleSlot() {
-  if(bundleSlots.length >= 4) return;
-  const id = bundleSlotCount++;
-  bundleSlots.push(id);
-  const wrap = document.getElementById('bundle-slots');
-  const div = document.createElement('div');
-  div.id = `slot-${id}`;
-  div.style.cssText = 'background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:6px;margin-bottom:6px';
-  div.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-      <span style="font-family:Space Mono,monospace;font-size:9px;color:var(--muted)">OBJECT ${bundleSlots.length}</span>
-      <button onclick="removeBundleSlot(${id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px">✕</button>
-    </div>
-    <select class="form-input" id="bs-cat-${id}" onchange="loadBundleModels(${id})" style="margin-bottom:4px">
-      ${(allCategories.length ? allCategories : ['airplane','chair','table','lamp','car','guitar','vase','sofa'])
-        .map(c=>`<option value="${c}">${c.charAt(0).toUpperCase()+c.slice(1)}</option>`).join('')}
-    </select>
-    <select class="form-input" id="bs-model-${id}"><option>Loading...</option></select>`;
-  wrap.appendChild(div);
+let bundleSlotCount=0;
+function addBundleSlot(){
+  if(bundleSlots.length>=4) return;
+  const id=bundleSlotCount++; bundleSlots.push(id);
+  const cats=allCategories.length?allCategories:['airplane','chair','table','lamp','car','guitar','vase','sofa'];
+  const div=document.createElement('div'); div.className='slot'; div.id=`slot-${id}`;
+  div.innerHTML=`
+    <div class="slot-head"><span>Object ${bundleSlots.length}</span><button type="button" onclick="removeBundleSlot(${id})">Remove</button></div>
+    <select class="input" id="bs-cat-${id}" aria-label="Category" onchange="loadBundleModels(${id})">
+      ${cats.map(c=>`<option value="${esc(c)}">${esc(title(c))}</option>`).join('')}</select>
+    <select class="input" id="bs-model-${id}" aria-label="Object"><option>Loading…</option></select>`;
+  document.getElementById('bundle-slots').appendChild(div);
   loadBundleModels(id);
-  if(bundleSlots.length >= 4) document.getElementById('add-slot-btn').style.display='none';
+  if(bundleSlots.length>=4) document.getElementById('add-slot-btn').hidden=true;
 }
 
-function removeBundleSlot(id) {
-  const el = document.getElementById(`slot-${id}`);
-  if(el) el.remove();
-  bundleSlots = bundleSlots.filter(s=>s!==id);
-  document.getElementById('add-slot-btn').style.display='block';
+function removeBundleSlot(id){
+  document.getElementById(`slot-${id}`)?.remove();
+  bundleSlots=bundleSlots.filter(s=>s!==id);
+  document.getElementById('add-slot-btn').hidden=false;
 }
 
-async function loadBundleModels(id) {
-  const cat = document.getElementById(`bs-cat-${id}`)?.value;
-  if(!cat) return;
-  const models = await fetch(`/api/category_models?cat=${cat}`).then(r=>r.json());
-  const sel = document.getElementById(`bs-model-${id}`);
-  if(sel) sel.innerHTML = models.map(m=>`<option value="${m}">${m}</option>`).join('');
+async function loadBundleModels(id){
+  const cat=document.getElementById(`bs-cat-${id}`)?.value; if(!cat) return;
+  const models=await fetch(`/api/category_models?cat=${encodeURIComponent(cat)}`).then(r=>r.json());
+  const sel=document.getElementById(`bs-model-${id}`);
+  if(sel) sel.innerHTML=models.map(m=>`<option value="${esc(m)}">${esc(m)}</option>`).join('');
 }
+
+function formError(msg){const e=document.getElementById('form-error');e.textContent=msg;e.hidden=!msg;}
 
 async function submitListing(){
-  const seller = document.getElementById('f-seller').value.trim();
-  const price  = document.getElementById('f-price').value;
-  const desc   = document.getElementById('f-desc').value;
-  if(!seller || !price) { alert('Fill seller username and price'); return; }
+  const seller=document.getElementById('f-seller').value.trim();
+  const price=document.getElementById('f-price').value;
+  const desc=document.getElementById('f-desc').value;
+  if(!seller||!price){formError('Enter a seller username and a price to publish.');return;}
   let data;
-  if(currentListingType === 'bundle') {
-    const shapes = bundleSlots.map(id => ({
-      category:   document.getElementById(`bs-cat-${id}`)?.value || 'vase',
-      model_name: document.getElementById(`bs-model-${id}`)?.value || '',
-      seed: Math.abs(Array.from(document.getElementById(`bs-model-${id}`)?.value||'').reduce((h,c)=>Math.imul(31,h)+c.charCodeAt(0)|0,0)) % 10000
+  if(currentListingType==='bundle'){
+    const shapes=bundleSlots.map(id=>({
+      category:document.getElementById(`bs-cat-${id}`)?.value||'vase',
+      model_name:document.getElementById(`bs-model-${id}`)?.value||'',
+      seed:Math.abs(Array.from(document.getElementById(`bs-model-${id}`)?.value||'').reduce((h,c)=>Math.imul(31,h)+c.charCodeAt(0)|0,0))%10000
     })).filter(s=>s.model_name);
-    if(shapes.length < 2) { alert('Add at least 2 objects to the bundle'); return; }
-    data = { is_bundle:true, seller, price, desc,
-             name: document.getElementById('f-listing-name').value || `Bundle by ${seller}`, shapes };
+    if(shapes.length<2){formError('A bundle needs at least 2 objects.');return;}
+    data={is_bundle:true,seller,price,desc,name:document.getElementById('f-listing-name').value||`Bundle by ${seller}`,shapes};
   } else {
-    const modelName   = document.getElementById('f-model').value || '';
-    const listingName = document.getElementById('f-listing-name').value.trim();
-    data = { seller, price, desc,
-             category:     document.getElementById('f-cat').value,
-             listing_name: listingName || modelName || 'Untitled',
-             model_name:   modelName };
+    const modelName=document.getElementById('f-model').value||'';
+    const listingName=document.getElementById('f-listing-name').value.trim();
+    data={seller,price,desc,category:document.getElementById('f-cat').value,listing_name:listingName||modelName||'Untitled',model_name:modelName};
   }
+  formError('');
   await fetch('/api/add_listing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
-  document.getElementById('f-seller').value='';
-  document.getElementById('f-price').value='';
-  document.getElementById('f-desc').value='';
-  document.getElementById('f-listing-name').value='';
-  bundleSlots=[]; bundleSlotCount=0;
+  ['f-seller','f-price','f-desc','f-listing-name'].forEach(i=>document.getElementById(i).value='');
+  bundleSlots=[];bundleSlotCount=0;
   document.getElementById('bundle-slots').innerHTML='';
-  document.getElementById('add-slot-btn').style.display='block';
+  document.getElementById('add-slot-btn').hidden=false;
   await loadListings();
   toggleAddForm();
 }
 
+/* ── History ───────────────────────────────────────────────────────────────── */
 async function loadHistory(){
   const history=await fetch('/api/history').then(r=>r.json());
-  const list=document.getElementById('history-list');
-  list.innerHTML=history.map(h=>`
-    <div class="history-row">
-      <div class="${h.stego?'stego-dot':'normal-dot'}"></div>
-      <div class="hist-item">
-        <div class="hist-name">${h.item}</div>
-        <div class="hist-meta">@${h.buyer} bought from @${h.seller} · ${h.ts}</div>
-        <div class="hist-tid">${h.trade_id}</div>
-      </div>
-      <div class="hist-price">$${parseFloat(h.price).toFixed(2)}</div>
-    </div>`).join('');
+  document.getElementById('history-list').innerHTML = history.length ? history.map(h=>`
+    <tr><td class="item">${esc(h.item)}</td><td>@${esc(h.buyer)}</td><td>@${esc(h.seller)}</td>
+    <td class="num">${esc(h.ts)}</td><td class="mono">${esc(h.trade_id)}</td><td class="r num">$${parseFloat(h.price).toFixed(2)}</td></tr>`).join('')
+    : `<tr><td colspan="6" style="color:var(--ink-2);padding:32px 12px">No trades yet. Buy a lot and it will appear here.</td></tr>`;
 }
 
-async function refreshListings() {
-  if(!confirm('Regenerate all listings from dataset? This removes old entries.')) return;
+async function refreshListings(){
+  if(!confirm('Reset the sale? All current listings are replaced with a fresh set from the dataset.')) return;
   Object.keys(pcCache).forEach(k=>delete pcCache[k]);
-  await fetch('/api/reset_listings', {method:'POST'});
-  allListings = [];
+  selectedId=null;
+  document.getElementById('detail-inner').innerHTML=`<div class="detail-empty"><strong>Select a lot</strong>Pick any object on the left to inspect it in 3D. Drag a plate to rotate it.</div>`;
+  await fetch('/api/reset_listings',{method:'POST'});
+  allListings=[];
   loadListings();
 }
 
-setInterval(loadListings, 5000);
+setInterval(loadListings,5000);
 init();
 </script>
 </body>
