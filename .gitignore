@@ -22,3 +22,8 @@ app/data/*
 
 # Large raw media
 media/*.mov
+
+# Design tooling (local only)
+PRODUCT.md
+DESIGN.md
+.impeccable/

@@ -40,14 +40,14 @@ and the shared passphrase can recover the message.
 | Role | App | What happens |
 |---|---|---|
 | **Sender** | `POINT.CIPHER` (port 5001) | Picks 4 carrier models from ModelNet40, types a secret message (≤ 16 bytes) and a passphrase. The message is encrypted, BCH-encoded, embedded into the 4 models and listed on the marketplace as a normal "bundle". The sender gets a **trade ID** (`TRD-YYYYMMDD-XXXXXXXX`). |
-| **Public** | `POINT.MARKET` (port 5000) | A marketplace of 3D models. Regular listings and stego bundles look the same. Anyone can browse, preview the point clouds in 3D (Three.js) and "buy". |
+| **Public** | `POINT.MARKET` (port 5000) | A marketplace of 3D models. Regular listings and stego bundles look the same. Anyone can browse, preview the point clouds in 3D (drag to rotate) and "buy". |
 | **Receiver** | `POINT.CIPHER` → Receiver tab | Enters the trade ID and the passphrase. The 4 objects are loaded, the bits are extracted by the network, error-corrected and decrypted. |
 
 | Marketplace (public) | Cipher tool: receiver decoding the message |
 |---|---|
 | ![Marketplace](docs/images/ui_marketplace.png) | ![Cipher receiver](docs/images/ui_cipher.png) |
 
-A full screen recording of the demo is in [`docs/demo.mp4`](docs/demo.mp4).
+A full screen recording of the demo (recorded with an earlier version of the UI) is in [`docs/demo.mp4`](docs/demo.mp4).
 
 ## Results at a glance
 
@@ -70,7 +70,7 @@ The full attack table, including the weak spots, is in [Evaluation](#evaluation)
 ├── app/                        # Flask demo applications
 │   ├── cipher_server.py        #   sender/receiver tool (model inference, crypto, BCH)  :5001
 │   ├── marketplace_server.py   #   public 3D model marketplace                         :5000
-│   ├── templates/              #   single-page UIs (Three.js point-cloud viewers)
+│   ├── templates/              #   single-page UIs (canvas point-cloud viewers, no build step)
 │   └── data/                   #   runtime state: listings.json, history.json, objects/*.npy (git-ignored)
 ├── models/
 │   └── model.pth               # final trained weights (StegoV5BCH, 3 MB)
@@ -127,6 +127,7 @@ Optional environment variables:
 |---|---|---|
 | `MODELNET_DIR` | `data/ModelNet40` | dataset location |
 | `MODEL_PATH` | `models/model.pth` | weights used by the cipher tool |
+| `PORT` | `5000` / `5001` | port of the server being started. On macOS, AirPlay Receiver already listens on 5000: run the marketplace with `PORT=5050` or turn AirPlay Receiver off. |
 | `HOST` | `127.0.0.1` | marketplace bind address (`0.0.0.0` to demo across devices on a LAN) |
 | `FLASK_DEBUG` | off | set to `1` for the Flask debugger (never on a public interface) |
 
@@ -439,3 +440,8 @@ Results at the time of publishing (Python 3.13, macOS, CPU):
   validity. A production system would use AES-GCM or add an HMAC tag.
 - **Demo-grade apps.** The apps use JSON-file storage shared by both servers, no authentication and permissive
   CORS. They are meant for local demonstration only.
+
+## Authors
+
+- **Emre Kurtuluş**
+- **[@zarashahbazova](https://github.com/zarashahbazova)**
