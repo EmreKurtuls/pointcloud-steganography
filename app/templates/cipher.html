@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>point.market — cipher</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07080f;--surface:#0d0f1a;--border:#1a1d2e;--accent:#3d7fff;--text:#c8d0e8;--muted:#4a5068;--success:#3dffaa;--warn:#ffcc44;--err:#ff4a4a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh}
+
+nav{display:flex;align-items:center;padding:14px 28px;border-bottom:1px solid var(--border);
+    position:sticky;top:0;background:var(--bg);z-index:100;gap:24px}
+.logo{font-size:20px;font-weight:800;letter-spacing:-0.5px}
+.logo span{color:var(--accent)}
+.logo-tag{font-family:'Space Mono',monospace;font-size:9px;color:var(--err);letter-spacing:2px;
+          border:1px solid rgba(255,74,74,.3);padding:2px 7px;border-radius:3px}
+.nav-tabs{display:flex;gap:0}
+.nav-tab{padding:8px 18px;cursor:pointer;font-family:'Space Mono',monospace;font-size:10px;
+         letter-spacing:2px;color:var(--muted);border-bottom:2px solid transparent;transition:.15s}
+.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.nav-right{margin-left:auto;font-family:'Space Mono',monospace;font-size:10px;color:var(--muted)}
+.live-dot{color:var(--err)}
+
+/* LAYOUT */
+.page{display:none;padding:28px 32px;max-width:1100px;margin:0 auto}
+.page.active{display:block}
+
+/* GRID: object selectors (2×2) */
+.obj-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.obj-slot{background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.obj-slot-header{padding:8px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.slot-num{font-family:'Space Mono',monospace;font-size:9px;color:var(--accent);letter-spacing:1px}
+.slot-selects{display:flex;gap:6px;padding:10px 12px}
+.obj-canvas{height:140px;background:#050508}
+
+/* FORM AREA */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.form-block{display:flex;flex-direction:column;gap:6px}
+.label{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted)}
+.input{padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:5px;
+       color:var(--text);font-family:'Space Mono',monospace;font-size:11px;width:100%}
+.input:focus{outline:none;border-color:var(--accent)}
+.input::placeholder{color:var(--muted)}
+select.input option{background:var(--surface)}
+
+/* BUTTONS */
+.btn{padding:10px 18px;border:none;border-radius:5px;cursor:pointer;
+     font-family:'Space Mono',monospace;font-size:11px;letter-spacing:1px;transition:.15s}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{opacity:.85}
+.btn-secondary{background:var(--surface);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{border-color:var(--accent)}
+.btn-danger{background:rgba(255,74,74,.15);color:var(--err);border:1px solid rgba(255,74,74,.3)}.btn-danger:hover{background:rgba(255,74,74,.25)}
+.btn-wide{width:100%;padding:12px}
+.btn-row{display:flex;gap:10px;margin-bottom:20px}
+
+/* STEGO RESULT */
+.stego-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
+.stego-thumb{background:#050508;border-radius:6px;overflow:hidden;border:1px solid rgba(239,154,154,.2)}
+.stego-thumb-canvas{height:110px}
+.stego-thumb-label{padding:4px 8px;font-family:'Space Mono',monospace;font-size:8px;color:rgba(239,154,154,.7)}
+
+/* TRADE ID BOX */
+.trade-box{background:rgba(61,127,255,.06);border:1px solid rgba(61,127,255,.25);border-radius:8px;
+           padding:16px 20px;margin:16px 0}
+.trade-box-title{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted);margin-bottom:8px}
+.trade-id{font-family:'Space Mono',monospace;font-size:16px;font-weight:700;color:var(--accent);letter-spacing:3px}
+.trade-cd{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);margin-top:6px}
+
+/* DECODE RESULT */
+.decode-box{border-radius:8px;padding:16px 20px;margin:16px 0;display:none}
+.decode-box.ok{background:rgba(61,255,170,.06);border:1px solid rgba(61,255,170,.25)}
+.decode-box.fail{background:rgba(255,74,74,.06);border:1px solid rgba(255,74,74,.25)}
+.decode-title{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;margin-bottom:10px}
+.decode-title.ok{color:var(--success)}.decode-title.fail{color:var(--err)}
+.decode-msg{font-size:22px;font-weight:800;letter-spacing:1px;margin-bottom:8px}
+.decode-meta{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);line-height:1.9}
+
+/* STATUS BAR */
+.status{font-family:'Space Mono',monospace;font-size:10px;padding:8px 12px;border-radius:5px;margin:10px 0;display:none}
+.status.info{background:rgba(61,127,255,.1);border:1px solid rgba(61,127,255,.2);color:var(--accent)}
+.status.ok{background:rgba(61,255,170,.08);border:1px solid rgba(61,255,170,.2);color:var(--success)}
+.status.err{background:rgba(255,74,74,.08);border:1px solid rgba(255,74,74,.2);color:var(--err)}
+
+/* SECTION TITLE */
+.section-title{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--muted);
+               margin:20px 0 10px;text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:6px}
+.section-title:first-child{margin-top:0}
+
+/* RECEIVER STEGO PREVIEW */
+.recv-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+.recv-thumb{background:#050508;border-radius:6px;overflow:hidden;border:1px solid rgba(61,127,255,.15)}
+.recv-canvas{height:110px}
+.recv-label{padding:4px 8px;font-family:'Space Mono',monospace;font-size:8px;color:rgba(79,195,247,.7)}
+
+/* CHUNK STATUS DOTS */
+.chunk-row{display:flex;gap:8px;align-items:center;margin:6px 0}
+.chunk-dot{width:10px;height:10px;border-radius:50%}
+.chunk-dot.ok{background:var(--success)}
+.chunk-dot.fail{background:var(--err)}
+.chunk-dot.pending{background:var(--muted)}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">POINT<span>.</span>CIPHER</div>
+  <div class="logo-tag">⚠ PRIVATE — DO NOT SHARE</div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="switchTab('sender',this)">SENDER</div>
+    <div class="nav-tab" onclick="switchTab('receiver',this)">RECEIVER</div>
+  </div>
+  <div class="nav-right"><span class="live-dot">●</span> OFFLINE MODE</div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════ SENDER ════ -->
+<div class="page active" id="tab-sender">
+
+  <div class="section-title">1 — SELECT CARRIER OBJECTS</div>
+  <div class="obj-grid" id="sender-slots"></div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="previewObjects()">👁 PREVIEW OBJECTS</button>
+    <button class="btn btn-secondary" onclick="randomizeAll()">🎲 RANDOMIZE ALL</button>
+  </div>
+  <div class="status" id="preview-status"></div>
+
+  <div class="section-title">2 — MESSAGE &amp; PASSPHRASE</div>
+  <div class="form-row">
+    <div class="form-block">
+      <div class="label">SECRET MESSAGE (max 16 chars)</div>
+      <input class="input" id="s-message" placeholder="Your secret text..." maxlength="16">
+    </div>
+    <div class="form-block">
+      <div class="label">PASSPHRASE (shared with receiver)</div>
+      <input class="input" id="s-passphrase" placeholder="Pre-shared passphrase..." type="password">
+    </div>
+  </div>
+
+  <div class="section-title">3 — MARKETPLACE LISTING</div>
+  <div class="form-row">
+    <div class="form-block">
+      <div class="label">LISTING TITLE</div>
+      <input class="input" id="s-listing-name" placeholder="e.g. Prop Bundle Vol.4">
+    </div>
+    <div class="form-block">
+      <div class="label">SELLER USERNAME</div>
+      <input class="input" id="s-seller" placeholder="Your username">
+    </div>
+  </div>
+  <div class="form-row">
+    <div class="form-block">
+      <div class="label">PRICE ($)</div>
+      <input class="input" id="s-price" placeholder="19.99" type="number" step="0.01">
+    </div>
+    <div class="form-block">
+      <!-- spacer -->
+    </div>
+  </div>
+
+  <button class="btn btn-primary btn-wide" onclick="embedAndList()">🔐 ENCRYPT · EMBED · LIST</button>
+  <div class="status" id="embed-status"></div>
+
+  <!-- Stego result -->
+  <div id="stego-result" style="display:none">
+    <div class="section-title">EMBEDDING RESULT</div>
+    <div class="stego-grid" id="stego-grid"></div>
+    <div class="trade-box">
+      <div class="trade-box-title">TRADE ID — SHARE THIS WITH RECEIVER</div>
+      <div class="trade-id" id="result-trade-id">—</div>
+      <div class="trade-cd" id="result-cd">Chamfer Distance: —</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ RECEIVER ═══ -->
+<div class="page" id="tab-receiver">
+
+  <div class="section-title">1 — ENTER TRADE ID &amp; PASSPHRASE</div>
+  <div class="form-row">
+    <div class="form-block">
+      <div class="label">TRADE ID (from marketplace)</div>
+      <input class="input" id="r-trade-id" placeholder="TRD-20260601-XXXXXXXX">
+    </div>
+    <div class="form-block">
+      <div class="label">PASSPHRASE</div>
+      <input class="input" id="r-passphrase" placeholder="Pre-shared passphrase..." type="password">
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="loadStegoObjects()">📦 LOAD STEGO OBJECTS</button>
+  </div>
+  <div class="status" id="load-status"></div>
+
+  <!-- Stego object preview -->
+  <div id="recv-preview" style="display:none">
+    <div class="section-title">STEGO OBJECTS (from marketplace)</div>
+    <div class="recv-grid" id="recv-grid"></div>
+  </div>
+
+  <div class="section-title">2 — DECODE</div>
+  <button class="btn btn-danger btn-wide" onclick="decodeMessage()">🔓 DECODE MESSAGE</button>
+  <div class="status" id="decode-status"></div>
+
+  <div class="decode-box" id="decode-result">
+    <div class="decode-title" id="decode-title">—</div>
+    <div class="decode-msg" id="decode-msg">—</div>
+    <div class="decode-meta" id="decode-meta">—</div>
+  </div>
+</div>
+
+<script>
+function makePCRenderer(container, points, color=0x4FC3F7) {
+  const W=container.clientWidth||240, H=container.clientHeight||140;
+  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  renderer.setSize(W,H); renderer.setClearColor(0x050508);
+  container.innerHTML=''; container.appendChild(renderer.domElement);
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(45,W/H,0.01,100);
+  camera.position.set(0,0,2.8);
+  const flat=new Float32Array(points.flat());
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(flat,3));
+  let sumY=0; for(let i=1;i<flat.length;i+=3) sumY+=flat[i];
+  const avgY=sumY/(flat.length/3);
+  const mesh=new THREE.Points(geo,new THREE.PointsMaterial({size:0.013,color,sizeAttenuation:true}));
+  let rx=avgY<-0.1?Math.PI:0.2, ry=0;
+  if(avgY<-0.1) mesh.rotation.x=Math.PI;
+  scene.add(mesh);
+  let drag=false,px=0,py=0;
+  const el=renderer.domElement;
+  el.addEventListener('mousedown',e=>{drag=true;px=e.clientX;py=e.clientY});
+  el.addEventListener('mousemove',e=>{if(!drag)return;ry+=(e.clientX-px)*0.01;rx+=(e.clientY-py)*0.01;px=e.clientX;py=e.clientY});
+  el.addEventListener('mouseup',()=>drag=false);
+  el.addEventListener('mouseleave',()=>drag=false);
+  (function anim(){requestAnimationFrame(anim);if(!drag)ry+=0.005;mesh.rotation.x=rx;mesh.rotation.y=ry;renderer.render(scene,camera)})();
+}
+
+function status(id, msg, type='info') {
+  const el=document.getElementById(id);
+  el.textContent=msg; el.className=`status ${type}`; el.style.display='block';
+}
+function clearStatus(id) { document.getElementById(id).style.display='none'; }
+
+const CATEGORIES = {{ categories | tojson }};
+
+function buildSenderSlots() {
+  const grid=document.getElementById('sender-slots');
+  grid.innerHTML='';
+  for(let i=0;i<4;i++) {
+    const catOpts=CATEGORIES.map(c=>`<option value="${c}">${c}</option>`).join('');
+    const div=document.createElement('div'); div.className='obj-slot';
+    div.innerHTML=`
+      <div class="obj-slot-header">
+        <span class="slot-num">OBJECT ${i+1}</span>
+      </div>
+      <div class="slot-selects">
+        <select class="input" id="s-cat-${i}" onchange="loadObjModels(${i})" style="flex:1">${catOpts}</select>
+        <select class="input" id="s-model-${i}" style="flex:2"><option>Loading...</option></select>
+      </div>
+      <div class="obj-canvas" id="s-canvas-${i}"></div>`;
+    grid.appendChild(div);
+    const defaultCat = CATEGORIES[i % CATEGORIES.length];
+    document.getElementById(`s-cat-${i}`).value = defaultCat;
+    loadObjModels(i);
+  }
+}
+
+async function loadObjModels(i) {
+  const cat=document.getElementById(`s-cat-${i}`).value;
+  const res=await fetch(`/api/objects_in_category?cat=${encodeURIComponent(cat)}`);
+  const objs=await res.json();
+  const sel=document.getElementById(`s-model-${i}`);
+  sel.innerHTML=objs.map(o=>`<option value="${o}">${o}</option>`).join('');
+}
+
+function randomizeAll() {
+  for(let i=0;i<4;i++) {
+    const catSel=document.getElementById(`s-cat-${i}`);
+    catSel.value=CATEGORIES[Math.floor(Math.random()*CATEGORIES.length)];
+    loadObjModels(i).then(()=>{
+      const modelSel=document.getElementById(`s-model-${i}`);
+      if(modelSel.options.length>1)
+        modelSel.selectedIndex=Math.floor(Math.random()*modelSel.options.length);
+    });
+  }
+}
+
+async function previewObjects() {
+  status('preview-status','Loading previews...','info');
+  const cats=[],models=[];
+  for(let i=0;i<4;i++) {
+    cats.push(document.getElementById(`s-cat-${i}`).value);
+    models.push(document.getElementById(`s-model-${i}`).value);
+  }
+  try {
+    const res=await fetch('/api/preview',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({categories:cats,objects:models})});
+    const data=await res.json();
+    data.forEach((item,i)=>{
+      const c=document.getElementById(`s-canvas-${i}`);
+      if(c) makePCRenderer(c, item.points, 0x4FC3F7);
+      const sel=document.getElementById(`s-model-${i}`);
+      for(let o of sel.options) { if(o.value===item.name){o.selected=true;break;} }
+    });
+    status('preview-status','Preview ready — objects loaded ✓','ok');
+  } catch(e) {
+    status('preview-status','Preview failed: '+e.message,'err');
+  }
+}
+
+async function embedAndList() {
+  const message=document.getElementById('s-message').value.trim();
+  const passphrase=document.getElementById('s-passphrase').value;
+  const listingName=document.getElementById('s-listing-name').value||'Prop Bundle';
+  const seller=document.getElementById('s-seller').value||'cipher_user';
+  const price=parseFloat(document.getElementById('s-price').value)||19.99;
+
+  if(!message) { status('embed-status','Enter a message first','err'); return; }
+  if(!passphrase) { status('embed-status','Enter a passphrase first','err'); return; }
+
+  status('embed-status','Encrypting → embedding → listing... (this takes a few seconds)','info');
+  document.getElementById('stego-result').style.display='none';
+
+  try {
+    const res=await fetch('/api/embed',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message,passphrase,listing_name:listingName,seller,price})});
+    const data=await res.json();
+    if(data.error) { status('embed-status',data.error,'err'); return; }
+
+    const grid=document.getElementById('stego-grid');
+    grid.innerHTML='';
+    data.stego_points.forEach((pts,i)=>{
+      const div=document.createElement('div'); div.className='stego-thumb';
+      div.innerHTML=`<div class="stego-thumb-canvas" id="stg-${i}"></div>
+                     <div class="stego-thumb-label">Stego Object ${i+1} · CD: ${data.cds[i].toFixed(6)}</div>`;
+      grid.appendChild(div);
+      setTimeout(()=>{ const c=document.getElementById(`stg-${i}`); if(c) makePCRenderer(c,pts,0xef9a9a); },50);
+    });
+
+    document.getElementById('result-trade-id').textContent=data.trade_id;
+    const avgCD=(data.cds.reduce((a,b)=>a+b,0)/data.cds.length).toFixed(6);
+    document.getElementById('result-cd').textContent=`Mean Chamfer Distance: ${avgCD}`;
+    document.getElementById('stego-result').style.display='block';
+    status('embed-status','Embedded and listed on marketplace ✓  Share the Trade ID with your receiver.','ok');
+
+  } catch(e) {
+    status('embed-status','Embed failed: '+e.message,'err');
+  }
+}
+
+async function loadStegoObjects() {
+  const tradeId=document.getElementById('r-trade-id').value.trim();
+  if(!tradeId) { status('load-status','Enter a Trade ID first','err'); return; }
+
+  status('load-status','Loading stego objects...','info');
+  document.getElementById('recv-preview').style.display='none';
+
+  try {
+    const grid=document.getElementById('recv-grid');
+    grid.innerHTML='';
+    const loaded=[];
+    for(let i=0;i<4;i++) {
+      const res=await fetch(`/api/stego_points/${encodeURIComponent(tradeId)}/${i}`);
+      if(!res.ok) { status('load-status',`Object ${i+1} not found. Check Trade ID.`,'err'); return; }
+      const data=await res.json();
+      loaded.push(data.points);
+      const div=document.createElement('div'); div.className='recv-thumb';
+      div.innerHTML=`<div class="recv-canvas" id="rv-${i}"></div>
+                     <div class="recv-label">Object ${i+1}</div>`;
+      grid.appendChild(div);
+      setTimeout(()=>{ const c=document.getElementById(`rv-${i}`); if(c) makePCRenderer(c,data.points,0x4FC3F7); },50);
+    }
+    document.getElementById('recv-preview').style.display='block';
+    status('load-status','4 stego objects loaded ✓  Ready to decode.','ok');
+  } catch(e) {
+    status('load-status','Load failed: '+e.message,'err');
+  }
+}
+
+async function decodeMessage() {
+  const tradeId=document.getElementById('r-trade-id').value.trim();
+  const passphrase=document.getElementById('r-passphrase').value;
+  if(!tradeId||!passphrase) { status('decode-status','Enter Trade ID and passphrase','err'); return; }
+
+  status('decode-status','Running BCH + Chase-5 decoding...','info');
+  const box=document.getElementById('decode-result'); box.style.display='none';
+
+  try {
+    const res=await fetch('/api/decode',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({trade_id:tradeId,passphrase})});
+    const data=await res.json();
+
+    if(data.error) { status('decode-status',data.error,'err'); return; }
+
+    box.style.display='block';
+    const title=document.getElementById('decode-title');
+    const msg=document.getElementById('decode-msg');
+    const meta=document.getElementById('decode-meta');
+
+    if(data.success && data.message) {
+      box.className='decode-box ok';
+      title.className='decode-title ok'; title.textContent='DECODED SUCCESSFULLY ✓';
+      msg.textContent=data.message;
+      meta.innerHTML=`Chunks recovered: ${data.chunks_ok} / 4<br>Trade ID: ${tradeId}`;
+      status('decode-status','Message recovered ✓','ok');
+    } else {
+      box.className='decode-box fail';
+      title.className='decode-title fail'; title.textContent='DECODE FAILED ✗';
+      msg.textContent='—';
+      meta.innerHTML=`Chunks recovered: ${data.chunks_ok} / 4<br>
+        ${data.chunks_ok<2?'Wrong passphrase or too many bit errors':'Partial recovery — try decoding again'}<br>
+        Trade ID: ${tradeId}`;
+      status('decode-status',`Decode failed — ${data.chunks_ok}/4 chunks recovered`,'err');
+    }
+  } catch(e) {
+    status('decode-status','Decode failed: '+e.message,'err');
+  }
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+buildSenderSlots();
+</script>
+</body>
+</html>

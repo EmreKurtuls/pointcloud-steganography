@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>point.market</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07080f;--surface:#0d0f1a;--border:#1a1d2e;--accent:#3d7fff;--text:#c8d0e8;--muted:#4a5068;--success:#3dffaa;--sold:#ff4a4a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh}
+nav{display:flex;align-items:center;padding:14px 28px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:100}
+.logo{font-size:22px;font-weight:800;letter-spacing:-0.5px}.logo span{color:var(--accent)}
+.nav-tabs{margin-left:32px;display:flex;gap:0}
+.nav-tab{padding:8px 16px;cursor:pointer;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;
+         color:var(--muted);border-bottom:2px solid transparent;transition:.15s}
+.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.nav-right{margin-left:auto;display:flex;gap:10px;align-items:center}
+.live-dot{color:var(--success)}
+.btn{padding:8px 14px;border:none;border-radius:5px;cursor:pointer;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:1px;transition:.15s}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{opacity:.85}
+.btn-secondary{background:var(--surface);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{border-color:var(--accent)}
+.btn-sm{padding:5px 10px;font-size:10px}
+main{display:grid;grid-template-columns:200px 1fr 320px;min-height:calc(100vh - 53px)}
+aside{padding:16px 12px;border-right:1px solid var(--border);overflow-y:auto;max-height:calc(100vh - 53px)}
+.content{padding:18px 20px;overflow-y:auto;max-height:calc(100vh - 53px)}
+.detail-panel{border-left:1px solid var(--border);overflow-y:auto;max-height:calc(100vh - 53px);position:sticky;top:53px}
+.filter-title{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--muted);margin-bottom:8px;margin-top:14px}
+.filter-title:first-child{margin-top:0}
+.filter-btn{display:block;width:100%;padding:6px 10px;margin-bottom:2px;background:transparent;
+            border:1px solid transparent;border-radius:4px;color:var(--muted);
+            font-family:'Space Mono',monospace;font-size:10px;cursor:pointer;text-align:left;transition:.15s}
+.filter-btn:hover,.filter-btn.active{background:rgba(61,127,255,.08);border-color:rgba(61,127,255,.3);color:var(--text)}
+.filter-btn.active{color:var(--accent)}
+.form-input{width:100%;padding:6px 8px;background:var(--bg);border:1px solid var(--border);
+            border-radius:4px;color:var(--text);font-family:'Space Mono',monospace;font-size:10px;margin-bottom:6px}
+.form-input:focus{outline:none;border-color:var(--accent)}
+select.form-input option{background:var(--surface)}
+.content-header{display:flex;align-items:center;margin-bottom:12px}
+.content-title{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:1px}
+.count-badge{margin-left:8px;background:rgba(61,127,255,.15);color:var(--accent);font-family:'Space Mono',monospace;font-size:10px;padding:1px 7px;border-radius:8px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;cursor:pointer;transition:.18s}
+.card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.card.selected{border-color:var(--accent);box-shadow:0 0 12px rgba(61,127,255,.2)}
+.card-thumb{height:110px;background:#050508;position:relative}
+.stego-badge{position:absolute;top:5px;right:5px;background:rgba(239,154,154,.15);color:#ef9a9a;
+             font-family:'Space Mono',monospace;font-size:8px;padding:2px 5px;border-radius:3px;
+             border:1px solid rgba(239,154,154,.3);letter-spacing:1px}
+.card-body{padding:8px 10px}
+.card-name{font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-seller{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);margin-top:2px}
+.card-price{font-family:'Space Mono',monospace;font-size:12px;color:var(--accent);font-weight:700;margin-top:3px}
+.detail-wrap{padding:18px}
+.detail-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
+              height:400px;color:var(--muted);font-family:'Space Mono',monospace;font-size:10px;
+              letter-spacing:1px;text-align:center;gap:8px}
+.detail-canvas-wrap{width:100%;height:200px;background:#050508;border-radius:5px;overflow:hidden;margin-bottom:10px}
+.bundle-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
+.bundle-thumb{height:120px;background:#050508;border-radius:4px;overflow:hidden;position:relative}
+.bundle-label{position:absolute;bottom:4px;left:6px;font-family:'Space Mono',monospace;font-size:8px;color:rgba(239,154,154,.7)}
+.detail-name{font-size:16px;font-weight:800;margin-bottom:3px}
+.detail-meta{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);line-height:1.8;margin-bottom:8px}
+.detail-price{font-family:'Space Mono',monospace;font-size:20px;color:var(--accent);font-weight:700;margin-bottom:12px}
+.detail-desc{font-family:'Space Mono',monospace;font-size:10px;color:var(--muted);line-height:1.7;
+             margin-bottom:12px;padding:8px;background:var(--bg);border-radius:4px;border:1px solid var(--border)}
+.receipt-box{background:rgba(61,255,170,.05);border:1px solid rgba(61,255,170,.2);border-radius:5px;
+             padding:10px;font-family:'Space Mono',monospace;font-size:10px;line-height:2;
+             color:var(--success);display:none;margin-top:10px}
+.trade-id-val{font-size:11px;font-weight:700;letter-spacing:2px;display:block;margin-top:4px}
+.buyer-input{margin-bottom:8px}
+.history-list{padding:8px 0}
+.history-row{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);gap:10px}
+.history-row:last-child{border-bottom:none}
+.hist-item{flex:1;min-width:0}
+.hist-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hist-meta{font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);margin-top:2px}
+.hist-price{font-family:'Space Mono',monospace;font-size:12px;color:var(--accent);font-weight:700;white-space:nowrap}
+.hist-tid{font-family:'Space Mono',monospace;font-size:8px;color:var(--muted);margin-top:2px}
+.stego-dot{width:6px;height:6px;border-radius:50%;background:#ef9a9a;flex-shrink:0}
+.normal-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">POINT<span>.</span>MARKET</div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="switchView('browse',this)">BROWSE</div>
+    <div class="nav-tab" onclick="switchView('history',this)">TRADE HISTORY</div>
+  </div>
+  <div class="nav-right">
+    <span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted)">
+      <span class="live-dot">●</span> LIVE
+    </span>
+    <span id="nav-count" style="font-family:'Space Mono',monospace;font-size:10px;color:var(--muted)">— LISTINGS</span>
+    <button class="btn btn-secondary btn-sm" onclick="toggleAddForm()">+ LIST ITEM</button>
+    <button class="btn btn-secondary btn-sm" onclick="refreshListings()" title="Regenerate all listings">↺ REFRESH</button>
+  </div>
+</nav>
+
+<main>
+  <aside>
+    <div class="filter-title">CATEGORY</div>
+    <div id="cat-filters">
+      <button class="filter-btn active" onclick="filterCat('all',this)">All</button>
+    </div>
+
+    <div id="add-form" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+      <div class="filter-title">LISTING TYPE</div>
+      <div style="display:flex;gap:4px;margin-bottom:8px">
+        <button class="btn btn-primary btn-sm" style="flex:1;font-size:9px"
+                onclick="setListingType('single',this)" id="type-single">SINGLE</button>
+        <button class="btn btn-secondary btn-sm" style="flex:1;font-size:9px"
+                onclick="setListingType('bundle',this)" id="type-bundle">BUNDLE</button>
+      </div>
+      <input class="form-input" id="f-seller" placeholder="Your username">
+      <input class="form-input" id="f-listing-name" placeholder="Listing title">
+      <input class="form-input" id="f-price" placeholder="Price ($)" type="number" step="0.01">
+      <input class="form-input" id="f-desc" placeholder="Description (optional)">
+      <div id="single-fields">
+        <div class="filter-title" style="margin-top:6px">OBJECT</div>
+        <select class="form-input" id="f-cat" onchange="loadCategoryModels()">
+          <option>Loading...</option>
+        </select>
+        <select class="form-input" id="f-model"><option>Loading...</option></select>
+      </div>
+      <div id="bundle-fields" style="display:none">
+        <div class="filter-title" style="margin-top:6px">OBJECTS IN BUNDLE (up to 4)</div>
+        <div id="bundle-slots"></div>
+        <button class="btn btn-secondary btn-sm" style="width:100%;margin-bottom:6px"
+                onclick="addBundleSlot()" id="add-slot-btn">+ ADD OBJECT</button>
+      </div>
+      <button class="btn btn-primary" style="width:100%;font-size:10px;margin-top:4px"
+              onclick="submitListing()">LIST</button>
+    </div>
+  </aside>
+
+  <div class="content" id="view-browse">
+    <div class="content-header">
+      <span class="content-title">AVAILABLE</span>
+      <span class="count-badge" id="count-badge">0</span>
+    </div>
+    <div class="grid" id="listings-grid"></div>
+  </div>
+
+  <div class="content" id="view-history" style="display:none">
+    <div class="content-header">
+      <span class="content-title">TRADE HISTORY</span>
+    </div>
+    <div class="history-list" id="history-list"></div>
+  </div>
+
+  <div class="detail-panel">
+    <div id="detail-inner">
+      <div class="detail-empty">
+        <div style="font-size:28px;opacity:.2">◈</div>
+        <div>SELECT A LISTING<br>TO PREVIEW</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const pcCache = {};
+
+function makePCRenderer(container, points, color=0x4FC3F7, autoRotate=true) {
+  const W=container.clientWidth||280, H=container.clientHeight||200;
+  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  renderer.setSize(W,H); renderer.setClearColor(0x050508);
+  container.innerHTML=''; container.appendChild(renderer.domElement);
+  const scene=new THREE.Scene(), camera=new THREE.PerspectiveCamera(45,W/H,0.01,100);
+  camera.position.set(0,0,2.8);
+  const geo=new THREE.BufferGeometry();
+  const flat = new Float32Array(points.flat());
+  geo.setAttribute('position',new THREE.BufferAttribute(flat,3));
+
+  let sumY=0;
+  for(let i=1;i<flat.length;i+=3) sumY+=flat[i];
+  const avgY = sumY/(flat.length/3);
+
+  const mesh=new THREE.Points(geo,new THREE.PointsMaterial({size:0.013,color,sizeAttenuation:true}));
+  if(avgY < -0.1) mesh.rotation.x = Math.PI;
+  scene.add(mesh);
+
+  let drag=false,px=0,py=0,rx=avgY<-0.1?Math.PI:0.2,ry=0;
+  const el=renderer.domElement;
+  el.addEventListener('mousedown',e=>{drag=true;px=e.clientX;py=e.clientY});
+  el.addEventListener('mousemove',e=>{if(!drag)return;ry+=(e.clientX-px)*0.01;rx+=(e.clientY-py)*0.01;px=e.clientX;py=e.clientY});
+  el.addEventListener('mouseup',()=>drag=false);el.addEventListener('mouseleave',()=>drag=false);
+  (function anim(){requestAnimationFrame(anim);if(!drag&&autoRotate)ry+=0.005;mesh.rotation.x=rx;mesh.rotation.y=ry;renderer.render(scene,camera)})();
+}
+
+let allListings=[], activeFilter='all', shapeNames={}, allCategories=[];
+
+function buildCategoryFilters(cats) {
+  const wrap = document.getElementById('cat-filters');
+  wrap.innerHTML = '';
+  const allBtn = document.createElement('button');
+  allBtn.className = 'filter-btn' + (activeFilter==='all' ? ' active' : '');
+  allBtn.textContent = 'All';
+  allBtn.onclick = () => filterCat('all', allBtn);
+  wrap.appendChild(allBtn);
+  cats.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn' + (activeFilter===cat ? ' active' : '');
+    btn.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+    btn.onclick = () => filterCat(cat, btn);
+    wrap.appendChild(btn);
+  });
+  const bndl = document.createElement('button');
+  bndl.className = 'filter-btn' + (activeFilter==='bundle' ? ' active' : '');
+  bndl.textContent = 'Bundles';
+  bndl.onclick = () => filterCat('bundle', bndl);
+  wrap.appendChild(bndl);
+}
+
+function buildCategoryDropdowns(cats) {
+  const opts = cats.map(c=>`<option value="${c}">${c.charAt(0).toUpperCase()+c.slice(1)}</option>`).join('');
+  const sel = document.getElementById('f-cat');
+  if(sel && opts) { sel.innerHTML = opts; loadCategoryModels(); }
+}
+
+async function init() {
+  await loadListings();
+
+  fetch('/api/categories')
+    .then(r => r.json())
+    .then(cats => {
+      allCategories = cats;
+      buildCategoryDropdowns(cats);
+    })
+    .catch(() => {
+      const fallback = [...new Set(allListings.map(L=>L.category).filter(c=>c&&c!=='bundle'))].sort();
+      allCategories = fallback;
+      buildCategoryDropdowns(fallback);
+    });
+}
+
+async function loadListings() {
+  const newListings = await fetch('/api/listings').then(r=>r.json());
+  const newIds = newListings.map(L=>L.id).join(',');
+  const oldIds = allListings.map(L=>L.id).join(',');
+  allListings = newListings;
+  document.getElementById('nav-count').textContent = allListings.length + ' LISTINGS';
+  const cats = [...new Set(newListings.map(L=>L.category).filter(c=>c&&c!=='bundle'))].sort();
+  buildCategoryFilters(cats);
+  if(newIds !== oldIds) renderGrid();
+}
+
+function switchView(v, btn) {
+  document.querySelectorAll('[id^=view-]').forEach(el=>el.style.display='none');
+  document.getElementById('view-'+v).style.display='block';
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  if(v==='history') loadHistory();
+}
+
+function filterCat(cat, btn) {
+  activeFilter=cat;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGrid();
+}
+
+function renderGrid() {
+  const filtered = activeFilter==='all' ? allListings
+                   : allListings.filter(L=>L.category===activeFilter);
+  document.getElementById('count-badge').textContent = filtered.length;
+  const grid = document.getElementById('listings-grid');
+  grid.innerHTML = '';
+  filtered.forEach(L => {
+    const card=document.createElement('div'); card.className='card';
+    const isBundle=L.category==='bundle'||L.stego;
+    card.innerHTML=`
+      <div class="card-thumb" id="t-${L.id}">
+        ${isBundle?'<div class="stego-badge">BUNDLE</div>':''}
+      </div>
+      <div class="card-body">
+        <div class="card-name">${L.name}</div>
+        <div class="card-seller">@${L.seller}</div>
+        <div class="card-price">$${parseFloat(L.price).toFixed(2)}</div>
+      </div>`;
+    card.onclick=()=>selectListing(L.id, card);
+    grid.appendChild(card);
+    const thumb=document.getElementById(`t-${L.id}`);
+    const color=isBundle?0xef9a9a:0x4FC3F7;
+    if(pcCache[L.id]) {
+      makePCRenderer(thumb, pcCache[L.id], color, true);
+    } else {
+      fetch(`/api/listing/${L.id}/pointcloud`).then(r=>r.json())
+        .then(data=>{
+          pcCache[L.id] = data.points;
+          makePCRenderer(thumb, data.points, color, true);
+        });
+    }
+  });
+}
+
+function selectListing(lid, cardEl) {
+  document.querySelectorAll('.card').forEach(c=>c.classList.remove('selected'));
+  if(cardEl) cardEl.classList.add('selected');
+  const L=allListings.find(x=>x.id===lid); if(!L) return;
+  const isBundle=L.category==='bundle'||L.stego;
+  const inner=document.getElementById('detail-inner');
+  inner.innerHTML=`
+    <div class="detail-wrap">
+      ${isBundle
+        ? `<div class="bundle-grid" id="bundle-grid"></div>`
+        : `<div class="detail-canvas-wrap" id="detail-canvas"></div>`}
+      <div class="detail-name">${L.name}
+        ${isBundle?'<span style="font-size:11px;color:#ef9a9a;font-weight:400"> · BUNDLE</span>':''}
+      </div>
+      <div class="detail-meta">@${L.seller} · ${L.category}<br>ID: ${L.id}</div>
+      <div class="detail-price">$${parseFloat(L.price).toFixed(2)}</div>
+      <div class="detail-desc">${L.desc||'No description.'}</div>
+      <input class="form-input buyer-input" id="buyer-name" placeholder="Your username">
+      <button class="btn btn-primary" style="width:100%;padding:10px"
+              onclick="buyItem('${L.id}')">🛒 BUY — INITIATE TRADE</button>
+      <div class="receipt-box" id="receipt-${L.id}"></div>
+    </div>`;
+
+  const renderDetail = (data) => {
+    if(data.bundle && data.all_points) {
+      const bg=document.getElementById('bundle-grid');
+      if(!bg) return;
+      data.all_points.forEach((pts,i)=>{
+        const div=document.createElement('div'); div.className='bundle-thumb';
+        div.innerHTML=`<div id="bc-${lid}-${i}" style="width:100%;height:100%"></div>
+                       <div class="bundle-label">Object ${i+1}</div>`;
+        bg.appendChild(div);
+        setTimeout(()=>{ const c=document.getElementById(`bc-${lid}-${i}`); if(c) makePCRenderer(c,pts,0xef9a9a,true); },50);
+      });
+    } else {
+      const c=document.getElementById('detail-canvas');
+      if(c) makePCRenderer(c, data.points, isBundle?0xef9a9a:0x4FC3F7);
+    }
+  };
+
+  if(pcCache['detail_'+lid]) {
+    renderDetail(pcCache['detail_'+lid]);
+  } else {
+    fetch(`/api/listing/${lid}/pointcloud`).then(r=>r.json()).then(data=>{
+      pcCache['detail_'+lid] = data;
+      renderDetail(data);
+    });
+  }
+}
+
+async function buyItem(lid) {
+  const buyer=document.getElementById('buyer-name')?.value||'anonymous';
+  const res=await fetch('/api/buy',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({listing_id:lid, buyer})});
+  const data=await res.json();
+  if(data.success) {
+    const r=document.getElementById(`receipt-${lid}`);
+    if(r){r.style.display='block';r.innerHTML=`TRADE CONFIRMED ✓<br>
+      ${data.name}<br>$${data.price} · @${data.seller}<br><br>
+      TRADE ID:<br><span class="trade-id-val">${data.trade_id}</span>`;}
+    delete pcCache[lid]; delete pcCache['detail_'+lid];
+    allListings=allListings.filter(L=>L.id!==lid);
+    renderGrid();
+    document.getElementById('nav-count').textContent=allListings.length+' LISTINGS';
+  }
+}
+
+let currentListingType = 'single', bundleSlots = [];
+
+function toggleAddForm(){
+  const f=document.getElementById('add-form');
+  f.style.display=f.style.display==='none'?'block':'none';
+  if(f.style.display==='block') loadCategoryModels();
+}
+
+function setListingType(type, btn) {
+  currentListingType = type;
+  document.getElementById('single-fields').style.display = type==='single'?'block':'none';
+  document.getElementById('bundle-fields').style.display = type==='bundle'?'block':'none';
+  document.getElementById('type-single').className = 'btn btn-sm ' + (type==='single'?'btn-primary':'btn-secondary');
+  document.getElementById('type-bundle').className  = 'btn btn-sm ' + (type==='bundle'?'btn-primary':'btn-secondary');
+  if(type==='bundle' && bundleSlots.length===0) { addBundleSlot(); addBundleSlot(); }
+}
+
+async function loadCategoryModels() {
+  const cat = document.getElementById('f-cat')?.value;
+  if(!cat) return;
+  const models = await fetch(`/api/category_models?cat=${cat}`).then(r=>r.json());
+  const sel = document.getElementById('f-model');
+  if(sel) sel.innerHTML = models.map(m=>`<option value="${m}">${m}</option>`).join('');
+}
+
+let bundleSlotCount = 0;
+function addBundleSlot() {
+  if(bundleSlots.length >= 4) return;
+  const id = bundleSlotCount++;
+  bundleSlots.push(id);
+  const wrap = document.getElementById('bundle-slots');
+  const div = document.createElement('div');
+  div.id = `slot-${id}`;
+  div.style.cssText = 'background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:6px;margin-bottom:6px';
+  div.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <span style="font-family:Space Mono,monospace;font-size:9px;color:var(--muted)">OBJECT ${bundleSlots.length}</span>
+      <button onclick="removeBundleSlot(${id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:11px">✕</button>
+    </div>
+    <select class="form-input" id="bs-cat-${id}" onchange="loadBundleModels(${id})" style="margin-bottom:4px">
+      ${(allCategories.length ? allCategories : ['airplane','chair','table','lamp','car','guitar','vase','sofa'])
+        .map(c=>`<option value="${c}">${c.charAt(0).toUpperCase()+c.slice(1)}</option>`).join('')}
+    </select>
+    <select class="form-input" id="bs-model-${id}"><option>Loading...</option></select>`;
+  wrap.appendChild(div);
+  loadBundleModels(id);
+  if(bundleSlots.length >= 4) document.getElementById('add-slot-btn').style.display='none';
+}
+
+function removeBundleSlot(id) {
+  const el = document.getElementById(`slot-${id}`);
+  if(el) el.remove();
+  bundleSlots = bundleSlots.filter(s=>s!==id);
+  document.getElementById('add-slot-btn').style.display='block';
+}
+
+async function loadBundleModels(id) {
+  const cat = document.getElementById(`bs-cat-${id}`)?.value;
+  if(!cat) return;
+  const models = await fetch(`/api/category_models?cat=${cat}`).then(r=>r.json());
+  const sel = document.getElementById(`bs-model-${id}`);
+  if(sel) sel.innerHTML = models.map(m=>`<option value="${m}">${m}</option>`).join('');
+}
+
+async function submitListing(){
+  const seller = document.getElementById('f-seller').value.trim();
+  const price  = document.getElementById('f-price').value;
+  const desc   = document.getElementById('f-desc').value;
+  if(!seller || !price) { alert('Fill seller username and price'); return; }
+  let data;
+  if(currentListingType === 'bundle') {
+    const shapes = bundleSlots.map(id => ({
+      category:   document.getElementById(`bs-cat-${id}`)?.value || 'vase',
+      model_name: document.getElementById(`bs-model-${id}`)?.value || '',
+      seed: Math.abs(Array.from(document.getElementById(`bs-model-${id}`)?.value||'').reduce((h,c)=>Math.imul(31,h)+c.charCodeAt(0)|0,0)) % 10000
+    })).filter(s=>s.model_name);
+    if(shapes.length < 2) { alert('Add at least 2 objects to the bundle'); return; }
+    data = { is_bundle:true, seller, price, desc,
+             name: document.getElementById('f-listing-name').value || `Bundle by ${seller}`, shapes };
+  } else {
+    const modelName   = document.getElementById('f-model').value || '';
+    const listingName = document.getElementById('f-listing-name').value.trim();
+    data = { seller, price, desc,
+             category:     document.getElementById('f-cat').value,
+             listing_name: listingName || modelName || 'Untitled',
+             model_name:   modelName };
+  }
+  await fetch('/api/add_listing',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  document.getElementById('f-seller').value='';
+  document.getElementById('f-price').value='';
+  document.getElementById('f-desc').value='';
+  document.getElementById('f-listing-name').value='';
+  bundleSlots=[]; bundleSlotCount=0;
+  document.getElementById('bundle-slots').innerHTML='';
+  document.getElementById('add-slot-btn').style.display='block';
+  await loadListings();
+  toggleAddForm();
+}
+
+async function loadHistory(){
+  const history=await fetch('/api/history').then(r=>r.json());
+  const list=document.getElementById('history-list');
+  list.innerHTML=history.map(h=>`
+    <div class="history-row">
+      <div class="${h.stego?'stego-dot':'normal-dot'}"></div>
+      <div class="hist-item">
+        <div class="hist-name">${h.item}</div>
+        <div class="hist-meta">@${h.buyer} bought from @${h.seller} · ${h.ts}</div>
+        <div class="hist-tid">${h.trade_id}</div>
+      </div>
+      <div class="hist-price">$${parseFloat(h.price).toFixed(2)}</div>
+    </div>`).join('');
+}
+
+async function refreshListings() {
+  if(!confirm('Regenerate all listings from dataset? This removes old entries.')) return;
+  Object.keys(pcCache).forEach(k=>delete pcCache[k]);
+  await fetch('/api/reset_listings', {method:'POST'});
+  allListings = [];
+  loadListings();
+}
+
+setInterval(loadListings, 5000);
+init();
+</script>
+</body>
+</html>

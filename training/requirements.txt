@@ -1,0 +1,6 @@
+# Extra packages for the Colab training/evaluation scripts
+# (Colab ships torch/numpy; these are listed for completeness)
+torch
+numpy
+tqdm
+matplotlib
