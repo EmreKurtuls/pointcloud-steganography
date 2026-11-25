@@ -440,8 +440,3 @@ Results at the time of publishing (Python 3.13, macOS, CPU):
   validity. A production system would use AES-GCM or add an HMAC tag.
 - **Demo-grade apps.** The apps use JSON-file storage shared by both servers, no authentication and permissive
   CORS. They are meant for local demonstration only.
-
-## Authors
-
-- **Emre Kurtuluş**
-- **[@zarashahbazova](https://github.com/zarashahbazova)**
