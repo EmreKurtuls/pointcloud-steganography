@@ -454,7 +454,7 @@ def get_stego_points(trade_id, idx):
 if __name__ == '__main__':
     print("\n" + "="*50)
     print("  POLYMORPH.CIPHER  — private cipher tool")
-    print("  http://localhost:5001")
+    print(f"  http://localhost:{os.environ.get('PORT', 5001)}")
     print("  ⚠  DO NOT share this URL publicly")
     print("="*50 + "\n")
-    app.run(debug=os.environ.get('FLASK_DEBUG') == '1', port=5001)
+    app.run(debug=os.environ.get('FLASK_DEBUG') == '1', port=int(os.environ.get('PORT', 5001)))

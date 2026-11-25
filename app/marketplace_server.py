@@ -465,7 +465,7 @@ def reset_listings():
 if __name__ == '__main__':
     print("\n" + "="*50)
     print("  POINT.MARKET  — public marketplace")
-    print("  http://localhost:5000")
+    print(f"  http://localhost:{os.environ.get('PORT', 5000)}")
     print("="*50 + "\n")
     app.run(debug=os.environ.get('FLASK_DEBUG') == '1',
-            host=os.environ.get('HOST', '127.0.0.1'), port=5000)
+            host=os.environ.get('HOST', '127.0.0.1'), port=int(os.environ.get('PORT', 5000)))
